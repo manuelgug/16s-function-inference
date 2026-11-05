@@ -12,6 +12,7 @@ process SINA_INDEX {
 
     script:
     """
+    export HOME=\$PWD   # ARB writes \$HOME/.arb_tmp; under Apptainer --no-home, HOME is read-only
     cp -L ${arb} silva.arb
     sina -i ${probe} -o probe.aligned.fasta --db silva.arb -p ${task.cpus}
     """
@@ -32,6 +33,7 @@ process ALIGN_16S {
 
     script:
     """
+    export HOME=\$PWD   # ARB writes \$HOME/.arb_tmp; under Apptainer --no-home, HOME is read-only
     mkdir alignment
     cat ${ssu} ${ecoli} > input.fna
     sina -i input.fna -o alignment/aligned.fasta --db ${arb} -p ${task.cpus} \\

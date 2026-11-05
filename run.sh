@@ -54,7 +54,7 @@ CV_FOLDS=5
 BATCH_SIZE=100              # genomes per per-genome task
 MAX_CPUS=$(nproc)
 MAX_MEMORY="$(awk '/MemTotal/{printf "%d", $2/1048576*0.9}' /proc/meminfo).GB"   # 90% of RAM
-DB_DIR="$PWD/db"            # ~65 GB of databases
+DB_DIR="${DB_DIR:-$PWD/db}"  # ~65 GB of databases; set DB_DIR in the environment to share one copy
 OUTDIR="$PWD/results"
 # =============================================================================
 
