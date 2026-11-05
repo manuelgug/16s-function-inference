@@ -4,6 +4,7 @@ This project asks whether variation in the 16S rRNA gene can be used to infer th
 
 - **Design and plan:** [DESIGN.md](DESIGN.md)
 - **Current status and resume point:** [STATUS.md](STATUS.md)
+- **Decision log:** [DECISIONS.md](DECISIONS.md)
 
 ## Running
 Status: not yet implemented (phase P0). Once built, the whole project will run with one command:

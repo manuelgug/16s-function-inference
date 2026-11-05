@@ -1,7 +1,8 @@
 # 16S → function inference: experimental design and plan
 
-**Status:** DRAFT, awaiting approval (2026-11-05). Nothing beyond this document, `STATUS.md` and repo scaffolding is built until approval.
+**Status:** APPROVED 2026-11-05 (all §10 defaults accepted). Parameters and primer sequences are user-editable at the top of `run.sh`.
 **Repo:** https://github.com/manuelgug/16s-function-inference
+**Decisions:** every decision, with alternatives and rationale, is logged in [DECISIONS.md](DECISIONS.md). Where this document and the log disagree, the log is newer.
 
 ---
 
@@ -41,7 +42,7 @@ Filters, applied in this order:
 
 Counts after filters 1–3 (R232 metadata, checked 2026-11-05): **52,888 bacteria + 2,075 archaea = 54,963 genomes**. This is the ceiling for the full-scale run.
 
-Genome sequences are fetched from NCBI with the `datasets` CLI by assembly accession (GTDB `RS_`/`GB_` prefix removed). This avoids the 192 GB / 132 GB GTDB tarballs for the pilot, and the same code path scales.
+Genome sequences are fetched from the NCBI FTP tree over HTTPS (`ftp.ncbi.nlm.nih.gov/genomes/all/...`) by assembly accession, with the GTDB `RS_`/`GB_` prefix removed (D025). This avoids the 192 GB / 132 GB GTDB tarballs for the pilot, and the same code path scales.
 
 ### 2.2 Pilot sample (~2,000 genomes)
 - Stratified across GTDB phyla. Allocation is proportional to the number of filtered genomes per phylum, with a floor of `min(n_phylum, 10)`. Genomes within a phylum are drawn at random with a fixed seed.
@@ -55,7 +56,7 @@ Downloaded by `run.sh`. Versions are pinned. Checksums are recorded in `db/MANIF
 |---|---|---|---|
 | GTDB metadata, taxonomy, `bac120`/`ar53` trees | R232 | sampling, taxonomy, phylogeny | ~0.5 GB |
 | eggNOG-mapper data (eggNOG 5.0) | emapper 2.1.15 | KO + COG annotation | ~50 GB (verify at setup) |
-| SILVA SSU Ref NR99 ARB file | latest release, pinned at setup | SINA reference alignment | ~1 GB |
+| SILVA SSU Ref NR99 ARB file | release 144 (D023) | SINA reference alignment | ~1 GB |
 | KEGG module definitions | bundled in `kegg-pathways-completeness` 1.4.4 | module completeness | — |
 | PICRUSt2 default reference | bundled in PICRUSt2 2.6.4 | external baseline only | ~1 GB |
 | NCBI genome assemblies | per accession | input | ~4 MB/genome |
@@ -66,9 +67,9 @@ No data is downloaded from KEGG directly, for licence reasons. SILVA is CC-BY 4.
 
 ## 3. Per-genome processing
 
-1. **Fetch** genome FASTA (`datasets`).
+1. **Fetch** genome FASTA (NCBI FTP over HTTPS, D025).
 2. **Gene calling**: `pyrodigal` in single-genome mode, with the GTDB-reported translation table (e.g. code 4 for Mycoplasmatota).
-3. **16S extraction**: `barrnap` with `--kingdom bac|arc` from the GTDB domain. Keep non-partial copies ≥ 1,400 bp. Record copy number as metadata. The **representative copy** is the medoid of the genome's copies (minimum summed pairwise distance), with ties going to the longest copy. Copy-variation features are out of scope (decision 2026-11-05).
+3. **16S extraction**: `barrnap` 0.9 (D026) with `--kingdom bac|arc` from the GTDB domain. Keep non-partial copies ≥ 1,400 bp. Record copy number as metadata. The **representative copy** is the medoid of the genome's copies (minimum summed pairwise distance), with ties going to the longest copy. Copy-variation features are out of scope (decision 2026-11-05).
 4. **Annotation**: `eggNOG-mapper` 2.1.15 in DIAMOND mode with default sensitivity. Columns used: `KEGG_ko`, `COG_category`.
 5. **Targets** (genome × target matrices):
    - **KO presence/absence.** Only KOs with prevalence between 5 % and 95 % among the analysed genomes are modelled.
@@ -164,7 +165,7 @@ The scale-up decision is deliberately deferred to after the pilot (decision 2026
   - Checks Java ≥ 17 and a container runtime: Apptainer by default, Docker via `CONTAINER=docker`.
   - Installs a pinned Nextflow into `.bin/` if missing.
   - Runs `nextflow run main.nf -profile <scale>,<runtime> -resume`.
-  - Database setup is a sub-workflow. It is idempotent and skipped when `db/MANIFEST.tsv` is complete.
+  - Database downloads run on the host from `scripts/setup_db.sh` (resumable, checksum-verified, idempotent; D030). The SINA index is built once by a Nextflow process into `db/`.
 - **Containers**:
   - Every tool uses a version-pinned BioContainers image.
   - The Python analysis stack (pandas, scikit-learn, LightGBM, pyseer, matplotlib) is one image. It is built from `containers/analysis/Dockerfile` by GitHub Actions, published to GHCR, and referenced by digest.
