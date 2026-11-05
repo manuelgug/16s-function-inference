@@ -47,8 +47,8 @@ Pilot is running (`./run.sh pilot`). Meanwhile: finish the fresh-clone test, the
 - [x] CV split script + module (`bin/make_splits.py`), tested
 - [x] Aim 1 prediction script + module (`bin/aim1_predict.py`, one task per arm × level), tested; runs inside the pilot
 - [x] Aim 1 report (`bin/aim1_report.py` + `AIM1_REPORT`): accuracy vs identity, gain over null by level, paired vs k-NN, amplicon arms; checked on test run
-- [ ] M2 PICRUSt2 reference step
-- [ ] Phylogenetic (GTDB tree) distance to nearest training genome
+- [x] M2 PICRUSt2 step + evaluation, leak flagged per genome (D064)
+- [x] GTDB-tree distance to nearest training genome (Fig 4 in Aim 1 report) (D063)
 - [x] Aim 2 code (`bin/aim2_prep.py`, `bin/aim2_report.py`, `modules/aim2.nf`): tested; test profile runs end to end (n=20 → 95 % of tests flagged by pyseer, as expected)
 - [ ] Commit `reports/pilot/`
 

@@ -45,12 +45,16 @@ process AIM1_REPORT {
 
     input:
     path runs
+    path patristic
+    path splits
+    path picrust2
 
     output:
     path 'aim1_report'
 
     script:
     """
-    aim1_report.py --runs ${runs} --outdir aim1_report --seed ${params.seed}
+    aim1_report.py --runs ${runs} --outdir aim1_report --seed ${params.seed} \
+        --patristic ${patristic} --splits ${splits} --picrust2 ${picrust2}
     """
 }

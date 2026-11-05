@@ -1,4 +1,4 @@
-model	id_bin	mean	size	target_type	metric
+model	bin	mean	size	target_type	metric
 M0_null	<85	0.4908805389084611	88	ko	f1
 M0_null	85-90	0.5326378100701216	22	ko	f1
 M0_null	90-94	0.5469274724928026	10	ko	f1

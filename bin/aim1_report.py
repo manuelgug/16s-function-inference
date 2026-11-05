@@ -92,30 +92,46 @@ def fig_legend(fig, axes):
     fig.legend(seen.values(), seen.keys(), loc="outside upper center", ncol=len(seen), fontsize=9)
 
 
-def fig_distance(g, near, out):
+def fig_distance(g, near, out, col="nn_identity", bins=ID_BINS, labels=ID_LABELS,
+                 xlabel="16S identity to nearest training genome (%)", fname="fig1_accuracy_vs_identity.png"):
+    """Mean per-genome metric by distance-to-training bin, one line per model (full-length arm)."""
     d = g[g.arm == "full"].merge(near[near.arm == "full"], on=["arm", "level", "accession", "fold"])
-    d["id_bin"] = pd.cut(d["nn_identity"], ID_BINS, labels=ID_LABELS, right=False)
+    d["bin"] = pd.cut(d[col], bins, labels=labels, right=False)
     fig, axes = plt.subplots(1, 3, figsize=(13, 4), constrained_layout=True)
     table = []
     for ax, (tt, metric, title) in zip(axes, HEADLINE):
         sub = d[(d.target_type == tt) & (d.metric == metric)]
-        m = sub.groupby(["model", "id_bin"], observed=False)["value"].agg(["mean", "size"]).reset_index()
+        m = sub.groupby(["model", "bin"], observed=False)["value"].agg(["mean", "size"]).reset_index()
         for model, st in MODEL_STYLE.items():
             mm = m[m.model == model]
-            if mm.empty:
-                continue
-            x = np.arange(len(ID_LABELS))
-            ax.plot(x, mm["mean"], ls=st["ls"], color=st["color"], marker="o", label=st["label"])
+            if not mm.empty:
+                ax.plot(np.arange(len(labels)), mm["mean"], ls=st["ls"], color=st["color"], marker="o",
+                        label=st["label"])
         counts = m[m.model == "M0_null"]["size"].tolist()
-        ax.set_xticks(range(len(ID_LABELS)), [f"{l}\nn={c}" for l, c in zip(ID_LABELS, counts)], fontsize=8)
+        ax.set_xticks(range(len(labels)), [f"{l}\nn={c}" for l, c in zip(labels, counts)], fontsize=8)
         ax.set_title(f"{title} ({'higher' if HIGHER_BETTER[metric] else 'lower'} is better)", fontsize=10)
-        ax.set_xlabel("16S identity to nearest training genome (%)")
+        ax.set_xlabel(xlabel)
         table.append(m.assign(target_type=tt, metric=metric))
     axes[0].set_ylabel("mean per-genome value")
     fig_legend(fig, axes)
-    fig.savefig(out / "fig1_accuracy_vs_identity.png", dpi=150)
+    fig.savefig(out / fname, dpi=150)
     plt.close(fig)
     return pd.concat(table)
+
+
+def nearest_patristic(D, splits):
+    """Per level and test genome: patristic distance to the closest genome in the other folds."""
+    rows = []
+    for level, s in splits.groupby("level"):
+        s = s[s.accession.isin(D.index)]
+        for f, te in s.groupby("fold"):
+            tr = s.loc[s.fold != f, "accession"]
+            sub = D.loc[te.accession, tr].to_numpy()
+            with np.errstate(all="ignore"):
+                nn = np.where(np.isnan(sub).all(1), np.nan, np.nanmin(np.where(np.isnan(sub), np.inf, sub), 1))
+            rows.append(pd.DataFrame({"level": level, "fold": f, "accession": te.accession.to_numpy(),
+                                      "nn_patristic": nn}))
+    return pd.concat(rows)
 
 
 def fig_gain_by_level(gn, rng, n_boot, out):
@@ -183,6 +199,9 @@ def main(argv=None):
     ap.add_argument("--outdir", required=True)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--boot", type=int, default=1000)
+    ap.add_argument("--patristic", help="patristic.parquet (optional)")
+    ap.add_argument("--splits", help="splits.tsv (needed with --patristic)")
+    ap.add_argument("--picrust2", help="PICRUSt2 genome metrics (optional; external reference, D-log M2)")
     a = ap.parse_args(argv)
     out = Path(a.outdir)
     out.mkdir(parents=True, exist_ok=True)
@@ -202,6 +221,35 @@ def main(argv=None):
     comps.to_csv(out / "paired_comparisons.tsv", sep="\t", index=False)
     curve = fig_distance(g, near, out)
     curve.to_csv(out / "fig1_data.tsv", sep="\t", index=False)
+    phylo_lines = []
+    if a.patristic:
+        npd = nearest_patristic(pd.read_parquet(a.patristic), pd.read_csv(a.splits, sep="\t"))
+        near = near.merge(npd, on=["level", "fold", "accession"], how="left")
+        qs = np.nanquantile(near.loc[near.arm == "full", "nn_patristic"], [0, .2, .4, .6, .8, 1])
+        qs[-1] += 1e-6
+        labels = [f"{lo:.2f}-{hi:.2f}" for lo, hi in zip(qs[:-1], qs[1:])]
+        fig_distance(g, near, out, "nn_patristic", qs, labels, "GTDB-tree distance to nearest training genome "
+                     "(quintiles)", "fig4_accuracy_vs_tree_distance.png").to_csv(out / "fig4_data.tsv", sep="\t", index=False)
+        full = near[near.arm == "full"].dropna(subset=["nn_patristic"])
+        rho = full[["nn_identity", "nn_patristic"]].corr(method="spearman").iloc[0, 1]
+        phylo_lines = ["## Accuracy vs GTDB-tree distance (full length)", "",
+                       f"Spearman correlation between 16S identity and tree distance to the nearest training "
+                       f"genome: {rho:.3f}.", "", "![fig4](fig4_accuracy_vs_tree_distance.png)", ""]
+    pc_lines = []
+    if a.picrust2:
+        pc = pd.read_csv(a.picrust2, sep="\t")
+        self_ref = pc[pc.metric == "self_in_reference"].set_index("accession")["value"] == 1
+        pc = pc[pc.metric.isin(["f1", "jaccard", "nsti"])].copy()
+        pc["model"] = np.where(pc.accession.map(self_ref), "M2_picrust2 (self in reference)",
+                               "M2_picrust2 (self not in reference)")
+        ours = g[(g.arm == "full") & (g.level == "random") & (g.target_type == "ko") & g.metric.isin(["f1", "jaccard"])]
+        both = pd.concat([pc, ours]).groupby(["model", "metric"])["value"].agg(["mean", "size"])
+        both = both["mean"].unstack("metric").join(both["size"].unstack("metric").iloc[:, 0].rename("n_genomes"))
+        both = both.reset_index()
+        pc_lines = ["## PICRUSt2 (M2) out of the box: external reference only", "",
+                    "Its reference genomes overlap the test genomes, so these scores are optimistic (DESIGN §4.1). "
+                    "Our models shown at the random holdout level, the closest comparison.", "",
+                    md_table(both.round(3)), ""]
     by_level = fig_gain_by_level(gn, rng, a.boot, out)
     by_level.to_csv(out / "fig2_data.tsv", sep="\t", index=False)
     arms = fig_arms(gn, out)
@@ -220,6 +268,7 @@ def main(argv=None):
         md_table(nn[["level", "count", "10%", "50%", "90%"]]), "",
         "## Accuracy vs 16S identity (full length, all levels pooled)", "",
         "![fig1](fig1_accuracy_vs_identity.png)", "",
+        *phylo_lines,
         "## Gain over the null model by holdout level (full length)", "",
         "![fig2](fig2_gain_over_null_by_level.png)", "",
         md_table(by_level.round(4)), "",
@@ -231,6 +280,7 @@ def main(argv=None):
         md_table(arms.round(4)), "",
         "## KO prediction: median per-KO AUROC (pooled over folds)", "",
         md_table(auroc.round(3)), "",
+        *pc_lines,
         "Tables behind every figure are in the `fig*_data.tsv` files next to this report.",
     ]
     (out / "aim1_report.md").write_text("\n".join(lines) + "\n")

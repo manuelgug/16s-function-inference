@@ -16,6 +16,12 @@ Genomes: 24. Arms: V3V4, V4, full. Levels: random, genus, family, order, class.
 
 ![fig1](fig1_accuracy_vs_identity.png)
 
+## Accuracy vs GTDB-tree distance (full length)
+
+Spearman correlation between 16S identity and tree distance to the nearest training genome: -0.789.
+
+![fig4](fig4_accuracy_vs_tree_distance.png)
+
 ## Gain over the null model by holdout level (full length)
 
 ![fig2](fig2_gain_over_null_by_level.png)
@@ -274,5 +280,18 @@ Genomes: 24. Arms: V3V4, V4, full. Levels: random, genus, family, order, class.
 | full | genus | 0.213 | 0.542 | 0.621 | 0.505 |
 | full | order | 0.196 | 0.500 | 0.548 | 0.464 |
 | full | random | 0.213 | 0.544 | 0.587 | 0.477 |
+
+## PICRUSt2 (M2) out of the box: external reference only
+
+Its reference genomes overlap the test genomes, so these scores are optimistic (DESIGN §4.1). Our models shown at the random holdout level, the closest comparison.
+
+| model | f1 | jaccard | nsti | n_genomes |
+|---|---|---|---|---|
+| M0_null | 0.502 | 0.345 | nan | 24.000 |
+| M1_knn1 | 0.561 | 0.402 | nan | 24.000 |
+| M1_knn5 | 0.577 | 0.417 | nan | 24.000 |
+| M2_picrust2 (self in reference) | 0.956 | 0.918 | 0.023 | 10.000 |
+| M2_picrust2 (self not in reference) | 0.810 | 0.694 | 0.390 | 14.000 |
+| M3_rf | 0.539 | 0.383 | nan | 24.000 |
 
 Tables behind every figure are in the `fig*_data.tsv` files next to this report.
