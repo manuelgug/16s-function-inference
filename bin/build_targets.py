@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build functional target matrices (genome x target) from eggNOG-mapper annotations.
 
-Usage: build_targets.py --annotations a.emapper.annotations [...] --outdir targets
+Usage: build_targets.py --annotations a.emapper.annotations [...] --outdir targets [--cpus 16]
 
 Outputs (rows = genomes, index "accession"):
   ko_presence.parquet          KO presence/absence (uint8), every KO seen
@@ -60,16 +60,22 @@ def cog_matrix(df, genomes):
     return m.div(m.sum(axis=1).replace(0, 1), axis=0)
 
 
-def module_matrix(kos, genomes, workdir):
-    inp = Path(workdir) / "genome_kos.tsv"
-    with open(inp, "w") as f:
-        for g in genomes:
-            if kos.get(g):
+def module_matrix(kos, genomes, workdir, cpus=1):
+    """give_completeness is single-threaded (~5 s/genome): run it on `cpus` genome chunks at once."""
+    have = [g for g in genomes if kos.get(g)]
+    procs = []
+    for i in range(max(1, min(cpus, len(have)))):
+        inp, out = Path(workdir) / f"genome_kos.{i}.tsv", Path(workdir) / f"kpc.{i}"
+        with open(inp, "w") as f:
+            for g in have[i::cpus]:
                 f.write(g + "\t" + "\t".join(sorted(kos[g])) + "\n")
-    out = Path(workdir) / "kpc"
-    subprocess.run(["give_completeness", "-i", str(inp), "-m", "-o", str(out)], check=True,
-                   stdout=subprocess.DEVNULL)
-    long = pd.read_csv(out / "summary.kegg_contigs.tsv", sep="\t", usecols=["contig", "module_accession", "completeness"])
+        procs.append((out, subprocess.Popen(["give_completeness", "-i", str(inp), "-m", "-o", str(out)],
+                                            stdout=subprocess.DEVNULL)))
+    for _, p in procs:
+        if p.wait():
+            raise subprocess.CalledProcessError(p.returncode, p.args)
+    long = pd.concat(pd.read_csv(o / "summary.kegg_contigs.tsv", sep="\t",
+                                 usecols=["contig", "module_accession", "completeness"]) for o, _ in procs)
     m = long.pivot(index="contig", columns="module_accession", values="completeness") / 100.0
     m = m.reindex(genomes).fillna(0.0)  # modules not listed have completeness 0
     m.index.name = "accession"
@@ -80,6 +86,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--annotations", nargs="+", required=True)
     ap.add_argument("--outdir", required=True)
+    ap.add_argument("--cpus", type=int, default=1)
     a = ap.parse_args(argv)
     out = Path(a.outdir)
     out.mkdir(parents=True, exist_ok=True)
@@ -91,7 +98,7 @@ def main(argv=None):
     ko_matrix(kos, genomes).to_parquet(out / "ko_presence.parquet")
     cog_matrix(df, genomes).to_parquet(out / "cog_profile.parquet")
     with tempfile.TemporaryDirectory() as tmp:
-        module_matrix(kos, genomes, tmp).to_parquet(out / "module_completeness.parquet")
+        module_matrix(kos, genomes, tmp, a.cpus).to_parquet(out / "module_completeness.parquet")
 
     stats = df.groupby("accession").agg(
         n_annotated=("#query", "size"),
