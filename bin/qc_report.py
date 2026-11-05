@@ -31,7 +31,7 @@ def main(argv=None):
     q = q.join(stats[["n_proteins", "n_16s", "n_16s_full"]])
     q["has_16s"] = q["n_16s_full"].fillna(0) > 0
     q["annotated"] = ann["n_with_ko"].reindex(q.index).fillna(0) > 0
-    q["sina_identity"] = sina["align_ident_slv"].reindex(q.index) if "align_ident_slv" in sina else pd.NA
+    q["sina_quality"] = sina["align_quality_slv"].reindex(q.index)
     q["in_features"] = q.index.isin(feats.index)
     for pcr in sorted(Path(a.features).glob("pcr_*.tsv")):
         arm = pcr.stem.removeprefix("pcr_")

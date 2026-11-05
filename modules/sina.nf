@@ -35,6 +35,6 @@ process ALIGN_16S {
     mkdir alignment
     cat ${ssu} ${ecoli} > input.fna
     sina -i input.fna -o alignment/aligned.fasta --db ${arb} -p ${task.cpus} \\
-        --meta-fmt csv --fields align_ident_slv,align_quality_slv,align_cutoff_head_slv,align_cutoff_tail_slv
+        --meta-fmt csv --fields align_quality_slv,align_cutoff_head_slv,align_cutoff_tail_slv
     """
 }

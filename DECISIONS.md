@@ -52,4 +52,4 @@ Every project decision is recorded here, append-only, newest at the bottom. A de
 | D042 | 2026-11-05 | claude | NCBI politeness: at most 2 fetch tasks × 4 connections; User-Agent names the project URL, no personal email | More parallelism | Avoid throttling; no personal data in requests |
 | D043 | 2026-11-05 | claude | QC "usable" genome = in the 16S feature matrix and ≥ 1 KO annotation; the pilot yield check (≥ 90 %) uses this | Stricter definitions | Minimum needed to enter modelling |
 | D044 | 2026-11-05 | claude | Analysis image tag comes from `containers/analysis/VERSION` (0.1.0); bump it whenever `environment.yml` changes | `latest` tag | Pinned, reproducible tag in `conf/base.config` |
-| D045 | 2026-11-05 | claude | SINA alignment identity and quality (`align_ident_slv`, `align_quality_slv`) are recorded per genome for QC; no filter on them yet | Filter now | Look at the pilot distribution first |
+| D045 | 2026-11-05 | claude | SINA alignment quality (`align_quality_slv`; identity needs SINA search mode, not used) is recorded per genome for QC; no filter on them yet | Filter now | Look at the pilot distribution first |

@@ -13,12 +13,11 @@ include { SINA_INDEX; ALIGN_16S } from './modules/sina'
 include { BUILD_FEATURES        } from './modules/build_features'
 include { QC_REPORT             } from './modules/qc_report'
 
-def REQUIRED = ['gtdb_release', 'silva_release', 'min_completeness', 'max_contamination', 'min_ssu_len',
-                'full_n', 'seed', 'min_per_phylum', 'min_col_coverage', 'min_allele_freq', 'primers',
-                'pcr_error_rate', 'batch_size', 'max_cpus', 'max_memory', 'db_dir', 'outdir']
-
 workflow {
-    def missing = REQUIRED.findAll { params[it] == null }
+    def required = ['gtdb_release', 'silva_release', 'min_completeness', 'max_contamination', 'min_ssu_len',
+                    'full_n', 'seed', 'min_per_phylum', 'min_col_coverage', 'min_allele_freq', 'primers',
+                    'pcr_error_rate', 'batch_size', 'max_cpus', 'max_memory', 'db_dir', 'outdir']
+    def missing = required.findAll { params[it] == null }
     if (missing) {
         error "Missing parameters: ${missing.join(', ')}. Start the pipeline with ./run.sh, which sets them."
     }

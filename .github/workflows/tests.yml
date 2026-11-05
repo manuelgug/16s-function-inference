@@ -10,7 +10,9 @@ on:
 jobs:
   pytest:
     runs-on: ubuntu-latest
-    container: ghcr.io/manuelgug/16s-function-inference-analysis:0.1.0
+    container:
+      image: ghcr.io/manuelgug/16s-function-inference-analysis:0.1.0
+      options: --user root   # image default user is non-root; Actions needs root in job containers
     steps:
       - uses: actions/checkout@v4
       - run: pytest -q -p no:cacheprovider
