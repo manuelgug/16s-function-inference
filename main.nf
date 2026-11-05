@@ -13,6 +13,7 @@ include { SINA_INDEX; ALIGN_16S } from './modules/sina'
 include { BUILD_FEATURES        } from './modules/build_features'
 include { QC_REPORT             } from './modules/qc_report'
 include { MAKE_SPLITS; AIM1_PREDICT; AIM1_REPORT } from './modules/aim1'
+include { AIM2_PREP; AIM2_PYSEER; AIM2_REPORT } from './modules/aim2'
 
 workflow {
     def required = ['gtdb_release', 'silva_release', 'min_completeness', 'max_contamination', 'min_ssu_len',
@@ -67,4 +68,10 @@ workflow {
     // (BUILD_TARGETS already emits a value channel: its input is a collect())
     AIM1_PREDICT(arms.combine(levels), BUILD_FEATURES.out.first(), BUILD_TARGETS.out, MAKE_SPLITS.out.first())
     AIM1_REPORT(AIM1_PREDICT.out.collect())
+
+    // --- Aim 2: association beyond phylogeny (pyseer LMM), bacteria only ---
+    AIM2_PREP(file("${gtdb}/bac120_r${params.gtdb_release}.tree", checkIfExists: true), genome_list,
+              QC_REPORT.out, BUILD_FEATURES.out, BUILD_TARGETS.out)
+    AIM2_PYSEER(AIM2_PREP.out.chunks.flatten(), AIM2_PREP.out.dir.first())
+    AIM2_REPORT(AIM2_PYSEER.out.collect(), AIM2_PREP.out.dir, BUILD_FEATURES.out)
 }

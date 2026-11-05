@@ -36,7 +36,7 @@ Pilot is running (`./run.sh pilot`). Meanwhile: finish the fresh-clone test, the
 - [x] pytest for selection, targets, features (9 tests); CI workflow (fixed root user in job container)
 - [x] Dev run of test profile (Docker)
 - [x] `./run.sh test` passes end to end with Apptainer: 24/24 usable, all 15 Aim 1 tasks. eggNOG 6m15s for 24 genomes (15.6 s/genome on 32 cores)
-- [~] `./run.sh test` from a fresh clone (started 2026-11-05, clone in session scratchpad, shared DB_DIR)
+- [x] `./run.sh test` from a fresh clone passes; QC report byte-identical (D061). **P1 done.**
 
 ### P2 — Pilot data (~2k genomes)
 - [~] `./run.sh pilot` running (started 2026-11-05 on this workstation; log `results/pilot/.nextflow.log`). Expect ~9 h of eggNOG (2,000 × 15.6 s). Resume: `./run.sh pilot`
@@ -49,7 +49,7 @@ Pilot is running (`./run.sh pilot`). Meanwhile: finish the fresh-clone test, the
 - [x] Aim 1 report (`bin/aim1_report.py` + `AIM1_REPORT`): accuracy vs identity, gain over null by level, paired vs k-NN, amplicon arms; checked on test run
 - [ ] M2 PICRUSt2 reference step
 - [ ] Phylogenetic (GTDB tree) distance to nearest training genome
-- [ ] Aim 2: pyseer LMM, controls, homoplasy
+- [~] Aim 2 code (`bin/aim2_prep.py`, `bin/aim2_report.py`, `modules/aim2.nf`): written, unit-tested; test-profile run in progress
 - [ ] Commit `reports/pilot/`
 
 ### P4 — Pilot report and scale decision
