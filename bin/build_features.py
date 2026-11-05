@@ -17,7 +17,8 @@ are those strictly between the median aligned start and end of the amplified ins
 excluded); the arm keeps only genomes whose PCR succeeded, and drops features now invariant.
 
 Outputs: features_full.parquet, features_<arm>.parquet (float32, rows = genomes),
-         feature_columns.tsv, pcr_<arm>.tsv, alignment_columns.tsv
+         feature_columns.tsv, pcr_<arm>.tsv, alignment_columns.tsv,
+         alignment_kept.parquet (genome x kept column, one character per cell)
 """
 import argparse
 import subprocess
@@ -117,6 +118,9 @@ def main(argv=None):
     cols = np.flatnonzero(coverage >= a.min_col_coverage)
     pd.DataFrame({"column": cols, "ecoli_pos": ecoli[cols], "coverage": coverage[cols].round(5)}) \
         .to_csv(out / "alignment_columns.tsv", sep="\t", index=False)
+    # kept columns as characters, for 16S identity (k-NN) and per-column analyses (Aim 2)
+    pd.DataFrame(aln[:, cols].astype("U1"), index=pd.Index(ids, name="accession"),
+                 columns=[str(c) for c in cols]).to_parquet(out / "alignment_kept.parquet")
 
     full, meta = allele_features(aln, ids, cols, ecoli, a.min_allele_freq)
     full.to_parquet(out / "features_full.parquet")

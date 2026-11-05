@@ -12,11 +12,13 @@ include { BUILD_TARGETS         } from './modules/build_targets'
 include { SINA_INDEX; ALIGN_16S } from './modules/sina'
 include { BUILD_FEATURES        } from './modules/build_features'
 include { QC_REPORT             } from './modules/qc_report'
+include { MAKE_SPLITS; AIM1_PREDICT } from './modules/aim1'
 
 workflow {
     def required = ['gtdb_release', 'silva_release', 'min_completeness', 'max_contamination', 'min_ssu_len',
                     'full_n', 'seed', 'min_per_phylum', 'min_col_coverage', 'min_allele_freq', 'primers',
-                    'pcr_error_rate', 'batch_size', 'max_cpus', 'max_memory', 'db_dir', 'outdir']
+                    'pcr_error_rate', 'ko_min_prevalence', 'ko_max_prevalence',
+                    'holdout_levels', 'cv_folds', 'batch_size', 'max_cpus', 'max_memory', 'db_dir', 'outdir']
     def missing = required.findAll { params[it] == null }
     if (missing) {
         error "Missing parameters: ${missing.join(', ')}. Start the pipeline with ./run.sh, which sets them."
@@ -55,4 +57,12 @@ workflow {
               FETCH_GENOMES.out.status.collectFile(name: 'fetch_status.tsv', keepHeader: true, sort: { f -> f.name }),
               PROCESS_GENOMES.out.stats.collectFile(name: 'genome_stats.tsv', keepHeader: true, sort: { f -> f.name }),
               BUILD_TARGETS.out, BUILD_FEATURES.out, ALIGN_16S.out.meta)
+
+    // --- Aim 1: prediction, one task per input arm x holdout level ---
+    MAKE_SPLITS(genome_list, QC_REPORT.out)
+    arms = channel.of('full')
+        .mix(channel.fromPath(params.primers).splitCsv(sep: '\t').map { row -> row[0] })
+    levels = channel.fromList(params.holdout_levels.tokenize(','))
+    // .first() turns single-item outputs into value channels so every arm x level task gets them
+    AIM1_PREDICT(arms.combine(levels), BUILD_FEATURES.out.first(), BUILD_TARGETS.out.first(), MAKE_SPLITS.out.first())
 }

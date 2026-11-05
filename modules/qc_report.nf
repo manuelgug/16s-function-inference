@@ -12,7 +12,7 @@ process QC_REPORT {
     path sina_meta
 
     output:
-    path 'qc/*'
+    path 'qc'
 
     script:
     """
