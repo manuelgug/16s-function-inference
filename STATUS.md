@@ -39,7 +39,7 @@ Pilot is running (`./run.sh pilot`). Meanwhile: finish the fresh-clone test, the
 - [x] `./run.sh test` from a fresh clone passes; QC report byte-identical (D061). **P1 done.**
 
 ### P2 — Pilot data (~2k genomes)
-- [~] User suggestion (2026-11-05): eggNOG without DIAMOND `--iterate` (`--dmnd_iterate no`). Benchmark on the 24 test genomes in flight (speed + KO agreement). If adopted, the pilot's eggNOG step reruns with the new setting.
+- [x] User suggestion: eggNOG without DIAMOND `--iterate`. Tested: 2.0× slower here, KOs near-identical (Jaccard 0.975) → kept `--iterate` (D066). Pilot unchanged.
 - [~] `./run.sh pilot` running (started 2026-11-05 on this workstation; log `results/pilot/.nextflow.log`). Expect ~9 h of eggNOG (2,000 × 15.6 s). Resume: `./run.sh pilot`
 - [ ] Record runtime/disk per step from `results/pilot/pipeline_info/trace_*.tsv`
 - [ ] QC report: 16S yield, annotation yield, sample composition
@@ -63,6 +63,7 @@ Pilot is running (`./run.sh pilot`). Meanwhile: finish the fresh-clone test, the
 ## Log
 Append-only. Newest first.
 
+- 2026-11-05: P3 code done and tested on test profile (Aim 1 + report, PICRUSt2 M2, tree distances, Aim 2, cost script). Benchmarked eggNOG `--dmnd_iterate no`: 2× slower, kept default (D066). Pilot eggNOG in progress.
 - 2026-11-05: `./run.sh test` passes end to end (Apptainer). Fixed SINA CSV header issue and Nextflow value channels. Aim 1 wired in. Pilot started. Decisions D046–D053 (D048 deviates from the design: fixed hyperparameters in pilot).
 - 2026-11-05: Scaffold written and pushed. Test-profile dev run (Docker) works through SINA alignment; eggNOG DB still downloading. Decisions D033–D045.
 - 2026-11-05: Design approved. P1 started. Picked SILVA 144, barrnap 0.9, NCBI FTP download, separate pyseer container (DECISIONS D023–D031). Analysis image builds locally. Added DECISIONS.md.
