@@ -26,3 +26,10 @@ def test_ko_f1_and_jaccard():
     P = np.array([[0.9, 0.2, 0.7, 0.1]])
     m = genome_metrics("ko", Y, P)
     assert m["f1"][0] == pytest.approx(0.5) and m["jaccard"][0] == pytest.approx(1 / 3)
+
+
+def test_gain_sign_lower_is_better():
+    from aim1_report import gains
+    g = pd.DataFrame({"arm": "full", "level": "random", "accession": "a", "target_type": "module", "metric": "mae",
+                      "model": ["M0_null", "M3_rf"], "value": [0.20, 0.15], "fold": 0})
+    assert gains(g)["gain"].iloc[0] == pytest.approx(0.05)  # lower MAE than null = positive gain

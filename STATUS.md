@@ -46,7 +46,7 @@ Pilot is running (`./run.sh pilot`). Meanwhile: finish the fresh-clone test, the
 ### P3 — Pilot analysis
 - [x] CV split script + module (`bin/make_splits.py`), tested
 - [x] Aim 1 prediction script + module (`bin/aim1_predict.py`, one task per arm × level), tested; runs inside the pilot
-- [ ] Aim 1 report: distance curves, gain over null, paired comparisons vs k-NN, amplicon loss
+- [x] Aim 1 report (`bin/aim1_report.py` + `AIM1_REPORT`): accuracy vs identity, gain over null by level, paired vs k-NN, amplicon arms; checked on test run
 - [ ] M2 PICRUSt2 reference step
 - [ ] Phylogenetic (GTDB tree) distance to nearest training genome
 - [ ] Aim 2: pyseer LMM, controls, homoplasy

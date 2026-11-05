@@ -37,3 +37,20 @@ process AIM1_PREDICT {
         --threads ${task.cpus} --seed ${params.seed} --outdir ${arm}_${level}
     """
 }
+
+// Tables, figures and markdown report over all Aim 1 tasks; also copied into the repo's reports/ folder.
+process AIM1_REPORT {
+    publishDir params.outdir, mode: 'copy'
+    publishDir "${projectDir}/reports/${workflow.profile.tokenize(',')[0]}", mode: 'copy'
+
+    input:
+    path runs
+
+    output:
+    path 'aim1_report'
+
+    script:
+    """
+    aim1_report.py --runs ${runs} --outdir aim1_report --seed ${params.seed}
+    """
+}

@@ -12,7 +12,7 @@ include { BUILD_TARGETS         } from './modules/build_targets'
 include { SINA_INDEX; ALIGN_16S } from './modules/sina'
 include { BUILD_FEATURES        } from './modules/build_features'
 include { QC_REPORT             } from './modules/qc_report'
-include { MAKE_SPLITS; AIM1_PREDICT } from './modules/aim1'
+include { MAKE_SPLITS; AIM1_PREDICT; AIM1_REPORT } from './modules/aim1'
 
 workflow {
     def required = ['gtdb_release', 'silva_release', 'min_completeness', 'max_contamination', 'min_ssu_len',
@@ -64,5 +64,7 @@ workflow {
         .mix(channel.fromPath(params.primers).splitCsv(sep: '\t').map { row -> row[0] })
     levels = channel.fromList(params.holdout_levels.tokenize(','))
     // .first() turns single-item outputs into value channels so every arm x level task gets them
-    AIM1_PREDICT(arms.combine(levels), BUILD_FEATURES.out.first(), BUILD_TARGETS.out.first(), MAKE_SPLITS.out.first())
+    // (BUILD_TARGETS already emits a value channel: its input is a collect())
+    AIM1_PREDICT(arms.combine(levels), BUILD_FEATURES.out.first(), BUILD_TARGETS.out, MAKE_SPLITS.out.first())
+    AIM1_REPORT(AIM1_PREDICT.out.collect())
 }

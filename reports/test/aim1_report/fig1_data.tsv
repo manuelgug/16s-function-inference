@@ -1,0 +1,85 @@
+model	id_bin	mean	size	target_type	metric
+M0_null	<85	0.4908805389084611	88	ko	f1
+M0_null	85-90	0.5326378100701216	22	ko	f1
+M0_null	90-94	0.5469274724928026	10	ko	f1
+M0_null	94-97		0	ko	f1
+M0_null	97-99		0	ko	f1
+M0_null	>=99		0	ko	f1
+M1_knn1	<85	0.5231000562603032	88	ko	f1
+M1_knn1	85-90	0.5493127433966044	22	ko	f1
+M1_knn1	90-94	0.7631707874384229	10	ko	f1
+M1_knn1	94-97		0	ko	f1
+M1_knn1	97-99		0	ko	f1
+M1_knn1	>=99		0	ko	f1
+M1_knn5	<85	0.5464192124562953	88	ko	f1
+M1_knn5	85-90	0.6156720832945326	22	ko	f1
+M1_knn5	90-94	0.7348628754194453	10	ko	f1
+M1_knn5	94-97		0	ko	f1
+M1_knn5	97-99		0	ko	f1
+M1_knn5	>=99		0	ko	f1
+M3_rf	<85	0.5068230111979593	88	ko	f1
+M3_rf	85-90	0.5862729131194645	22	ko	f1
+M3_rf	90-94	0.6798757756001438	10	ko	f1
+M3_rf	94-97		0	ko	f1
+M3_rf	97-99		0	ko	f1
+M3_rf	>=99		0	ko	f1
+M0_null	<85	0.1953088893470439	88	module	mae
+M0_null	85-90	0.19679719480601224	22	module	mae
+M0_null	90-94	0.19452525675296783	10	module	mae
+M0_null	94-97		0	module	mae
+M0_null	97-99		0	module	mae
+M0_null	>=99		0	module	mae
+M1_knn1	<85	0.19348578332838687	88	module	mae
+M1_knn1	85-90	0.18680314618078145	22	module	mae
+M1_knn1	90-94	0.1108255222439766	10	module	mae
+M1_knn1	94-97		0	module	mae
+M1_knn1	97-99		0	module	mae
+M1_knn1	>=99		0	module	mae
+M1_knn5	<85	0.18287164700979536	88	module	mae
+M1_knn5	85-90	0.1729873317209157	22	module	mae
+M1_knn5	90-94	0.1277467355132103	10	module	mae
+M1_knn5	94-97		0	module	mae
+M1_knn5	97-99		0	module	mae
+M1_knn5	>=99		0	module	mae
+M3_rf	<85	0.18426691148091445	88	module	mae
+M3_rf	85-90	0.18185945397073572	22	module	mae
+M3_rf	90-94	0.1522299289703369	10	module	mae
+M3_rf	94-97		0	module	mae
+M3_rf	97-99		0	module	mae
+M3_rf	>=99		0	module	mae
+M4_lgbm	<85	0.19495339996435426	88	module	mae
+M4_lgbm	85-90	0.19992596046491104	22	module	mae
+M4_lgbm	90-94	0.19408406615257262	10	module	mae
+M4_lgbm	94-97		0	module	mae
+M4_lgbm	97-99		0	module	mae
+M4_lgbm	>=99		0	module	mae
+M0_null	<85	0.14314046476713635	88	cog	bray_curtis
+M0_null	85-90	0.13333653489297087	22	cog	bray_curtis
+M0_null	90-94	0.11683515310287476	10	cog	bray_curtis
+M0_null	94-97		0	cog	bray_curtis
+M0_null	97-99		0	cog	bray_curtis
+M0_null	>=99		0	cog	bray_curtis
+M1_knn1	<85	0.17722490895539522	88	cog	bray_curtis
+M1_knn1	85-90	0.18292499299753795	22	cog	bray_curtis
+M1_knn1	90-94	0.09325314611196518	10	cog	bray_curtis
+M1_knn1	94-97		0	cog	bray_curtis
+M1_knn1	97-99		0	cog	bray_curtis
+M1_knn1	>=99		0	cog	bray_curtis
+M1_knn5	<85	0.1419102011925795	88	cog	bray_curtis
+M1_knn5	85-90	0.14340082251212813	22	cog	bray_curtis
+M1_knn5	90-94	0.09445097669959068	10	cog	bray_curtis
+M1_knn5	94-97		0	cog	bray_curtis
+M1_knn5	97-99		0	cog	bray_curtis
+M1_knn5	>=99		0	cog	bray_curtis
+M3_rf	<85	0.1378965212286196	88	cog	bray_curtis
+M3_rf	85-90	0.13147987391461025	22	cog	bray_curtis
+M3_rf	90-94	0.10014396980404854	10	cog	bray_curtis
+M3_rf	94-97		0	cog	bray_curtis
+M3_rf	97-99		0	cog	bray_curtis
+M3_rf	>=99		0	cog	bray_curtis
+M4_lgbm	<85	0.14418991693210872	88	cog	bray_curtis
+M4_lgbm	85-90	0.13786992193623024	22	cog	bray_curtis
+M4_lgbm	90-94	0.11554891392588615	10	cog	bray_curtis
+M4_lgbm	94-97		0	cog	bray_curtis
+M4_lgbm	97-99		0	cog	bray_curtis
+M4_lgbm	>=99		0	cog	bray_curtis
