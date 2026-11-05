@@ -13,7 +13,7 @@ Every decision goes into [DECISIONS.md](DECISIONS.md) when it is made.
 For in-flight tasks, record machine, start date and how to resume. A long run is resumed with `./run.sh <profile>`; Nextflow `-resume` skips finished work.
 
 ## Next action
-Pilot is running (`./run.sh pilot`). Meanwhile: finish the fresh-clone test, then write the Aim 1 report and Aim 2. Note for the report: null-model COG Spearman is already ~0.9, so report gain over null.
+Pilot is running (`./run.sh pilot`, detached; console log `results/pilot/console.log`). It was launched before Aim 1 report, Aim 2, PICRUSt2 and tree distances were wired in: **when it finishes, run `./run.sh pilot` again** (everything finished is cached; only new steps run). Then: cost report (`scripts/cost_report.py`), disk usage, pilot report (P4). Meanwhile: finish the fresh-clone test, then write the Aim 1 report and Aim 2. Note for the report: null-model COG Spearman is already ~0.9, so report gain over null.
 
 ## Tasks
 
