@@ -3,6 +3,7 @@
 
 Usage: aim2_report.py --results *.pyseer.tsv.gz --input aim2_input/ --features features/ --outdir aim2_report
 
+Tests that pyseer flags in `notes` (bad-chisq, high-bse, ...) are excluded from hits.
 Significance (DESIGN §5): Bonferroni per phenotype over the number of unique variant patterns
 (alpha 0.05), plus Benjamini-Hochberg FDR over all phenotype x variant tests.
 Calibration: genomic inflation lambda = median chi2(1) / 0.4549 per phenotype.
@@ -76,7 +77,8 @@ def main(argv=None):
     n_patterns = geno.T.drop_duplicates().shape[0]
     bonf = 0.05 / n_patterns
     r["q_bh"] = false_discovery_control(r["p"].clip(lower=1e-300), method="bh")
-    r["bonferroni"] = r["p"] < bonf
+    r["flagged"] = r["notes"].notna() & (r["notes"].astype(str).str.strip() != "")  # pyseer: bad-chisq, high-bse, ...
+    r["bonferroni"] = (r["p"] < bonf) & ~r["flagged"]
 
     per = r.groupby(["phenotype", "kind"]).agg(n_tests=("p", "size"), min_p=("p", "min"),
                                                n_bonferroni=("bonferroni", "sum"),
@@ -144,7 +146,9 @@ def main(argv=None):
                  [["kind", "count", "10%", "50%", "90%"]]), "",
         "## Significant associations", "",
         f"Bonferroni hits (phenotype × allele): **{len(hits)}** across {hits.phenotype.nunique()} phenotypes "
-        f"and {hits.variant.nunique()} alleles. BH-FDR < 0.05: {(r.q_bh < 0.05).sum()}.", "",
+        f"and {hits.variant.nunique()} alleles. BH-FDR < 0.05 (unflagged): {((r.q_bh < 0.05) & ~r.flagged).sum()}. "
+        f"Tests flagged by pyseer (`notes`, e.g. bad-chisq / high-bse) are never hits: "
+        f"{r.flagged.mean():.1%} of all tests.", "",
         f"Alleles among hits that arose more than once on the tree (Fitch changes > 1): "
         f"**{int((homo > 1).sum())} of {len(homo)}**. Only these can support association beyond phylogeny.", "",
         "![hits](fig2_hits_along_16s.png)", "",

@@ -49,7 +49,7 @@ Pilot is running (`./run.sh pilot`). Meanwhile: finish the fresh-clone test, the
 - [x] Aim 1 report (`bin/aim1_report.py` + `AIM1_REPORT`): accuracy vs identity, gain over null by level, paired vs k-NN, amplicon arms; checked on test run
 - [ ] M2 PICRUSt2 reference step
 - [ ] Phylogenetic (GTDB tree) distance to nearest training genome
-- [~] Aim 2 code (`bin/aim2_prep.py`, `bin/aim2_report.py`, `modules/aim2.nf`): written, unit-tested; test-profile run in progress
+- [x] Aim 2 code (`bin/aim2_prep.py`, `bin/aim2_report.py`, `modules/aim2.nf`): tested; test profile runs end to end (n=20 → 95 % of tests flagged by pyseer, as expected)
 - [ ] Commit `reports/pilot/`
 
 ### P4 — Pilot report and scale decision
