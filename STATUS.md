@@ -39,6 +39,7 @@ Pilot is running (`./run.sh pilot`). Meanwhile: finish the fresh-clone test, the
 - [x] `./run.sh test` from a fresh clone passes; QC report byte-identical (D061). **P1 done.**
 
 ### P2 — Pilot data (~2k genomes)
+- [~] User suggestion (2026-11-05): eggNOG without DIAMOND `--iterate` (`--dmnd_iterate no`). Benchmark on the 24 test genomes in flight (speed + KO agreement). If adopted, the pilot's eggNOG step reruns with the new setting.
 - [~] `./run.sh pilot` running (started 2026-11-05 on this workstation; log `results/pilot/.nextflow.log`). Expect ~9 h of eggNOG (2,000 × 15.6 s). Resume: `./run.sh pilot`
 - [ ] Record runtime/disk per step from `results/pilot/pipeline_info/trace_*.tsv`
 - [ ] QC report: 16S yield, annotation yield, sample composition
