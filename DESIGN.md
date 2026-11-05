@@ -187,7 +187,7 @@ The scale-up decision is deliberately deferred to after the pilot (decision 2026
 ├── nextflow.config
 ├── conf/                # base / test / pilot / full / apptainer / docker
 ├── modules/             # one .nf per process
-├── subworkflows/        # setup_db, per_genome, features, aim1, aim2
+├── scripts/setup_db.sh  # database download (host side)
 ├── bin/                 # Python scripts called by processes (on PATH in Nextflow)
 ├── config/              # pilot_genomes.tsv, primers.tsv, splits/
 ├── containers/analysis/ # Dockerfile for the Python analysis image

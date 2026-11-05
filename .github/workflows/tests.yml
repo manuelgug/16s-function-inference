@@ -1,0 +1,16 @@
+# Unit tests for bin/ scripts, run inside the published analysis image.
+name: tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_run:
+    workflows: [analysis-container]
+    types: [completed]
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    container: ghcr.io/manuelgug/16s-function-inference-analysis:0.1.0
+    steps:
+      - uses: actions/checkout@v4
+      - run: pytest -q -p no:cacheprovider
