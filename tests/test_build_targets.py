@@ -32,3 +32,29 @@ def test_cog_fractions_split_multi_letter(ann):
     assert m.loc["gA", "C"] == pytest.approx(0.5)
     assert m.loc["gA", "E"] == pytest.approx(0.25) and m.loc["gA", "G"] == pytest.approx(0.25)
     assert m.loc["gB"].sum() == 0  # no COG-annotated proteins
+
+
+def test_module_scorer_matches_give_completeness(tmp_path):
+    """Vectorised completeness must equal the library's command-line tool, genome by genome."""
+    import subprocess
+
+    import numpy as np
+    import pandas as pd
+
+    from build_targets import ModuleScorer
+    ms = ModuleScorer()
+    rng = np.random.default_rng(0)
+    pool = sorted({k for labels, _, _ in ms.paths.values() for k in labels if k.startswith("K")})
+    genomes = {f"g{i}": set(rng.choice(pool, size=rng.integers(1, 400), replace=False)) for i in range(6)}
+    genomes["g_none"] = {pool[0]}
+    inp = tmp_path / "in.tsv"
+    inp.write_text("".join(g + "\t" + "\t".join(sorted(k)) + "\n" for g, k in genomes.items()))
+    subprocess.run(["give_completeness", "-i", str(inp), "-m", "-o", str(tmp_path / "o")], check=True,
+                   stdout=subprocess.DEVNULL)
+    ref = pd.read_csv(tmp_path / "o" / "summary.kegg_contigs.tsv", sep="\t")
+    ref = ref.pivot(index="contig", columns="module_accession", values="completeness").fillna(0) / 100
+    presence = pd.DataFrame([{k: 1 for k in v} for v in genomes.values()], index=list(genomes)).fillna(0)
+    new = ms.matrix(presence)
+    ref = ref.reindex(index=new.index, columns=new.columns).fillna(0)
+    assert set(ref.columns[ref.any()]) <= set(new.columns)
+    assert np.allclose(new.to_numpy(), ref.to_numpy(), atol=1e-6)

@@ -6,8 +6,8 @@ Usage (after a run; needs pandas, e.g. inside the analysis image):
       --scale 20000 54963 --out reports/pilot/cost.md
 
 Per-genome steps (fetch, barrnap, genes/16S, eggNOG) are extrapolated linearly in genome count.
-Whole-set steps are listed as measured: their scaling differs (alignment ~linear, Aim 1 models
-~n log n to n^2, Aim 2 ~n^2 per test) and is stated next to each.
+Whole-set steps are listed as measured: their scaling differs (alignment ~linear, Aim 2 ~n^2 per
+test) and is stated next to each. The benchmark reports its own costs (bench_eval.py).
 """
 import argparse
 import re
@@ -16,8 +16,7 @@ import pandas as pd
 
 PER_GENOME = {"FETCH_GENOMES", "BARRNAP", "PROCESS_GENOMES", "EGGNOG"}
 SCALING = {"ALIGN_16S": "~linear", "BUILD_FEATURES": "~linear", "BUILD_TARGETS": "~linear",
-           "AIM1_PREDICT": "~n log n (RF) to n^2 (k-NN)", "AIM2_PYSEER": "~n^2 per test (LMM)",
-           "PICRUST2": "~linear + fixed reference cost", "PATRISTIC": "n^2 memory (D063)"}
+           "AIM2_PYSEER": "~n^2 per test (LMM)"}
 
 
 def seconds(s):

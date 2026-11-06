@@ -9,3 +9,4 @@ __pycache__/
 .pytest_cache/
 .apptainer/
 reports/**/*.gz
+reports/bench_test/

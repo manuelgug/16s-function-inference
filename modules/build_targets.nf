@@ -10,6 +10,6 @@ process BUILD_TARGETS {
 
     script:
     """
-    build_targets.py --annotations ${annotations} --outdir targets --cpus ${task.cpus}
+    build_targets.py --annotations ${annotations} --outdir targets
     """
 }

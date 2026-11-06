@@ -92,35 +92,70 @@ No data is downloaded from KEGG directly, for licence reasons. SILVA is CC-BY 4.
 
 ---
 
-## 4. Aim 1: prediction
+## 4. Aim 1: prediction (superseded 2026-11-06 by §B)
 
-### 4.1 Models
-All models are scored on the same splits.
-
-| ID | Model | Notes |
-|---|---|---|
-| M0 | Null | Training-set prevalence or mean per target |
-| M1 | k-NN on 16S | Identity over shared aligned columns. k = 1, plus distance-weighted k = 5. This is the PICRUSt2-like transfer baseline. |
-| M2 | PICRUSt2 2.6.4, out of the box | Default reference. Its reference overlaps the test genomes, so it is optimistically biased. It is reported as an external reference point only; no claims rest on it. |
-| M3 | Random forest, multi-output | One model for all KO targets; scikit-learn. |
-| M4 | LightGBM, per target | Module completeness and COG fractions, which have fewer targets. |
-
-Hyperparameters come from a small grid, tuned by inner grouped CV within the training folds.
-
-### 4.2 Evaluation
-- **Clade-blocked CV** at nested GTDB levels: random (species-level), genus-out, family-out, order-out, class-out. Each uses 5-fold `GroupKFold` on the rank label. Split files are saved and reused by every model and input arm.
-- **Distance curves**: for each test genome, record (a) 16S identity and (b) GTDB-tree patristic distance to the nearest training genome. Accuracy is plotted against distance; this is an NSTI analogue. This is the headline result.
-- **Metrics**:
-  - KOs: per-genome F1 and Jaccard of the predicted KO set; per-KO AUROC and AUPRC, macro-averaged. The presence threshold is tuned in inner CV.
-  - Modules: per-module Spearman and MAE.
-  - COG profiles: per-genome Spearman and Bray–Curtis distance between predicted and true profiles.
-- **Input arms**: full-length vs V4 vs V3-V4, on the same genomes (the intersection of PCR successes) and the same splits.
-- **Statistics**: model comparisons are paired per test genome (e.g. M3 vs M1, Wilcoxon signed-rank), with bootstrap 95 % CIs over genomes. "Beats 1-NN" means the paired-difference CI excludes 0 at a given holdout level.
-- **16S resolution limit**: report the fraction of test genomes whose 16S is identical to a training genome's but whose functions differ. This is the ceiling any 16S-only method faces.
+The pilot (P3) tested Aim 1 on GTDB R232 genomes with SINA-aligned allele features, k-NN, random forest and
+LightGBM (DECISIONS D046–D076; results in git history, `reports/pilot/pilot_report.md`). Its PICRUSt2 comparison
+was not fair: different reference sets and sizes, genome-level bootstrap, untuned settings. §B replaces it with a
+benchmark on PICRUSt2's own reference.
 
 ---
 
-## 5. Aim 2: association beyond phylogeny
+## B. Benchmark against PICRUSt2 (from 2026-11-06)
+
+**Goal (user, 2026-11-06):** know exactly when and why our method beats PICRUSt2, by how much, with a comparison
+that is as fair as possible (same genomes, no leakage, broad phylogenetic coverage), and make the method fast.
+
+### B.1 Data: PICRUSt2's own reference
+PICRUSt2 2.6.4 ships its reference (PICRUSt2-SC, GTDB r214): 26,868 bacteria + 1,002 archaea, one aligned full-length
+16S per genome, the 16S tree, HMM and RAxML model, and KO copy-number tables (eggNOG-mapper annotation). Both
+PICRUSt2 and our methods learn from exactly these genomes, sequences and labels. Truth for a held-out genome is its
+row of that table (presence = copy number >= 1). KOs scored: present in >= 10 genomes (10,314).
+No downloads and no eggNOG are needed (`bin/bench_extract.py`).
+
+### B.2 Splits, lockbox, leakage
+- 5-fold clade-blocked CV at random (species), genus, family, order and class (`bin/make_splits.py`); identical-16S
+  genomes share a fold; taxon folds are size-balanced.
+- **Lockbox:** families are split once, by phylum, into **dev** (method design, tuning) and **confirm** (scored once,
+  frozen settings). Training sets always contain every genome outside the held-out fold.
+- **Every method gets the same task:** `bin/bench_prepare.py` writes the training list and one query FASTA per
+  level x fold x arm; leak checks (query in training, shared taxon) fail the run.
+- **PICRUSt2 per fold:** custom reference built from its own files, restricted to the training genomes (alignment
+  rows, pruned tree, trait tables; HMM rebuilt from the subset; constant-0 traits dropped because castor's
+  max-parsimony fails on them). Placement once per task, then every HSP setting (mp, emp_prob, pic,
+  subtree_average) on the placed trees. Remaining bias in PICRUSt2's favour: tree topology and RAxML model were
+  estimated with all genomes.
+
+### B.3 Methods
+| method | description |
+|---|---|
+| **s16fun (ours)** | vsearch top-25 hits -> evidence per (query, KO): 1/5/25-NN averages, KO prevalence in the nearest genome's genus..phylum, global prevalence, KO conservation within genera, hit identities -> LightGBM stacker (trained on dev, cross-fitted by family) -> expected-F1 calls (`bin/s16fun.py`) |
+| PICRUSt2 2.6.4 | all 4 HSP settings; thresholds of continuous outputs tuned on dev; comparator = its best setting per level, chosen after seeing the scores |
+| k-mer neural net | embeRNA design (1-5-mer frequencies, 2 x 512 ReLU, sigmoid per KO), trained per fold and region |
+| nearest-neighbour family | nearest genome; 5 nearest; nearest if >= 97 % (Piphillin / Tax4Fun2-like); genus core if >= 97 % (MicFunPred / PanFP-like) |
+| null | KOs in >= 50 % of reference genomes |
+Not run as released tools: Tax4Fun2 (no maintained distribution), Piphillin (web server only), embeRNA (EC labels
+only), MicFunPred (own IMG reference); each is represented by its method on the shared reference.
+
+### B.4 Endpoints and statistics
+Pre-registered in [BENCHMARK.md](BENCHMARK.md) before the confirm run: primary endpoint, win rule, secondary
+endpoints, cluster bootstrap over genera (genomes of a genus are not independent), Holm correction.
+"When and why" analyses: accuracy by novelty (16S identity, NSTI), by phylum, per KO (AUROC), amplicon arms,
+ordination with PERMANOVA / ANOSIM / PERMDISP, stacker feature importance and ablations, run time and memory.
+
+### B.5 Real-world test and communities
+- **Real-world:** GTDB R232 genomes not in PICRUSt2's reference, annotated with the GTDB pipeline (`main.nf`);
+  PICRUSt2 out of the box against s16fun trained on the same 27,870 genomes. Annotation concordance with
+  PICRUSt2's tables is checked first.
+- **Communities:** simulated from held-out genomes (exact truth); per-sample error against a permuted-label null and
+  differential-abundance concordance (Sun et al. 2020).
+
+### B.6 The tool
+`bin/s16fun.py build-ref` (16S FASTA + KO copy table + taxonomy) and `predict` (ASV FASTA [+ abundance table] ->
+per-ASV KO probabilities and calls, expected copies, module completeness, novelty, community KO abundances). The
+benchmark runs the same code.
+
+## 5. Aim 2: association beyond phylogeny (paused 2026-11-06 until the benchmark is done)
 
 - **Tool**: `pyseer` LMM. The kinship matrix comes from the pruned GTDB tree (`phylogeny_distance.py --lmm`).
 - **Domains**: bacteria only in the pilot, since the pilot holds about 80 archaea. Archaea are added at full scale if n permits.
@@ -150,6 +185,12 @@ Hyperparameters come from a small grid, tuned by inner grouped CV within the tra
 | P4 | Pilot report and scale decision | User decides scope of full run |
 | P5 | Full scale (≤ 54,963 genomes, scope per P4) | Same outputs at scale |
 | P6 | Final report | `reports/final/` |
+| B0 | Benchmark infrastructure: PICRUSt2 per-fold references, s16fun, baselines, `./run.sh bench_test` | bench_test passes end to end |
+| B1 | Dev runs: method development, speed; dev report | User reviews the dev report |
+| B2 | Freeze: BENCHMARK.md + frozen stackers / thresholds committed | User approves the frozen configuration |
+| B3 | Confirm run (Track A) + simulated communities | Confirm report |
+| B4 | Real-world test (GTDB R232 genomes new since r214) | Report section |
+| B5 | Final benchmark report; then the P5 scale decision | User decision |
 
 The scale-up decision is deliberately deferred to after the pilot (decision 2026-11-05). The pilot report gives the user:
 - **Engineering**: whether `./run.sh pilot` ran end to end from a clean clone with no manual steps, and whether `-resume` worked after an interruption.

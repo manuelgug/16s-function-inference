@@ -3,7 +3,7 @@
 **Living tracker.** Read this first when resuming, on any machine or in any session. Update it whenever a task changes state, then commit and push. Uncommitted status is lost status.
 
 - **Last updated:** 2026-11-06 by Claude Code (Opus 5.5)
-- **Current phase:** P4 — pilot done, reports (HTML) + PICRUSt2 comparison written; waiting for the user's review and full-scale decision
+- **Current phase:** B0/B1 — benchmark against PICRUSt2 on its own reference (DESIGN §B); scaling (P5) waits for it
 - **Blocking:** nothing
 
 Legend: `[ ]` todo · `[~]` in flight · `[x]` done · `[!]` blocked · `[-]` dropped
@@ -13,7 +13,8 @@ Every decision goes into [DECISIONS.md](DECISIONS.md) when it is made.
 For in-flight tasks, record machine, start date and how to resume. A long run is resumed with `./run.sh <profile>`; Nextflow `-resume` skips finished work.
 
 ## Next action
-User reviews `reports/pilot/pilot_report.html` and `reports/pilot/picrust2_comparison/picrust2_comparison.html`. Then the user decides the open questions in pilot report §7 (scale: 55k or 20k; Aim 2 sample size; Aim 2 homoplasy criterion; optional PICRUSt2 with our reference; D048/D060/D019). Then do the pre-full-scale engineering in §6: Aim 2 subsample + pyseer `--save-lmm`, chunked PICRUSt2 (and comparison), nearest-relative tree distances. Then launch `./run.sh full`.
+Finish B0 (`./run.sh bench_test` end to end), then B1: `./run.sh bench` (BENCH_PHASE=dev) and the dev report
+(`reports/bench/dev/benchmark_report.html`). Primary rule decided (D088: per-KO AUROC superiority + F1 non-inferiority).
 
 ## Tasks
 
@@ -58,12 +59,28 @@ User reviews `reports/pilot/pilot_report.html` and `reports/pilot/picrust2_compa
 - [x] PICRUSt2 head-to-head with ordination + PERMANOVA/ANOSIM/PERMDISP: `reports/pilot/picrust2_comparison/` (D074–D077); summary in pilot report §5
 - [~] User reviews the HTML reports, then decides full-scale scope (questions in report §7)
 
+### B — Benchmark against PICRUSt2 (DESIGN §B, D078)
+- [x] Design: equal reference (PICRUSt2-SC), clade folds, dev/confirm lockbox, cluster bootstrap (D078, D080)
+- [x] PICRUSt2 per-fold custom references work (HMM rebuilt, constant traits dropped) (D081)
+- [x] s16fun tool (`bin/s16fun.py`): vsearch evidence + LightGBM stacker + expected-F1 calls (D085, D086)
+- [x] Baselines: nearest genome (+ >= 97 %), 5-NN, genus core, k-mer MLP, null (D082, D083)
+- [x] Module completeness vectorised, exact (D079)
+- [x] Superseded Aim 1 / pilot PICRUSt2 code and reports removed (D078)
+- [~] B0: `./run.sh bench_test` end to end
+- [ ] B1: dev run + dev report (HTML, executive summary, methods diagram)
+- [ ] B2: freeze (BENCHMARK.md, config/bench_frozen/), user approval
+- [ ] B3: confirm run + simulated communities
+- [ ] B4: real-world test (GTDB R232 genomes new since r214)
+- [ ] B5: final report; then the P5 scale decision
+
 ### P5 / P6 — Full scale and final report
-- [ ] Defined after P4
+- [ ] Defined after B5
 
 ## Log
 Append-only. Newest first.
 
+- 2026-11-06: Community-level prototype (dev, genus-held-out genomes, 20 replicates): Bray-Curtis to true KO profile s16fun 0.106 vs PICRUSt2 best 0.125 / default 0.148; with true 16S copies 0.087 vs 0.091, so s16fun's edge is expected-copy aggregation, and PICRUSt2 predicts 16S copy number better (log error 0.43 vs 0.47-0.54 for every s16fun estimator tried, incl. a phylogenetic kernel on PICRUSt2's tree). Tried and dropped: tree-kernel KO features, uncertainty-filtered DA (D093). Primary rule changed by the user to AUROC superiority + F1 non-inferiority (D088).
+- 2026-11-06: Benchmark built (DESIGN §B). Probe on genus fold 0 (2,258 dev genomes, equal reference): KO F1 PICRUSt2 mp 0.832, s16fun 0.831, 5-NN 0.824; oracle (majority of the 5 functionally nearest reference genomes) 0.856, so <= ~0.025 headroom for any relative-based method. Per-KO AUROC 0.936 vs 0.765 (s16fun better on 99 % of KOs). Cost: s16fun 18 s / 3 GB, PICRUSt2 780 s / ~130 GB per task.
 - 2026-11-06: Pilot resume finished (90 tasks, 0 failed; FETCH/PROCESS/eggNOG cached thanks to D072). All reports rendered to HTML. PICRUSt2 comparison: overall tie on unseen genomes (KO F1 5-NN 0.785 vs 0.783); ours better for novel genomes, Archaea, CPR, per-KO ranking and between-genome structure; PICRUSt2 better near its reference.
 - 2026-11-05: P3 code done and tested on test profile (Aim 1 + report, PICRUSt2 M2, tree distances, Aim 2, cost script). Benchmarked eggNOG `--dmnd_iterate no`: 2× slower, kept default (D066). Pilot eggNOG in progress.
 - 2026-11-05: `./run.sh test` passes end to end (Apptainer). Fixed SINA CSV header issue and Nextflow value channels. Aim 1 wired in. Pilot started. Decisions D046–D053 (D048 deviates from the design: fixed hyperparameters in pilot).
