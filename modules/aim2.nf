@@ -56,5 +56,6 @@ process AIM2_REPORT {
     script:
     """
     aim2_report.py --results ${results} --input ${input_dir} --features ${features} --outdir aim2_report
+    render_html.py aim2_report/aim2_report.md
     """
 }

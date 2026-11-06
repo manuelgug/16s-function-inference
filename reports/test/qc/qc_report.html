@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>QC report</title><style>
+:root { --bg:#fcfcfb; --surface:#ffffff; --ink:#1f1e1c; --ink2:#52514e; --rule:#e4e3df;
+        --accent:#2a78d6; --note:#f3f2ee; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+        --bg:#1b1b1a; --surface:#232322; --ink:#ecebe7; --ink2:#b3b1ab; --rule:#3a3936;
+        --accent:#6aa5ec; --note:#2b2a28; } }
+:root[data-theme="dark"] { --bg:#1b1b1a; --surface:#232322; --ink:#ecebe7; --ink2:#b3b1ab; --rule:#3a3936;
+        --accent:#6aa5ec; --note:#2b2a28; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 1.9rem; line-height: 1.25; margin: 0 0 1rem; }
+h2 { font-size: 1.35rem; margin: 2.4rem 0 .8rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.1rem; margin: 1.6rem 0 .6rem; }
+a { color: var(--accent); }
+code { font: .9em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--note);
+       padding: .1em .3em; border-radius: 4px; }
+img { display:block; max-width:100%; height:auto; margin: 1.2rem auto .4rem; border-radius: 6px;
+      border: 1px solid var(--rule); background:#fcfcfb; }
+table { display:block; overflow-x:auto; border-collapse: collapse; margin: 1rem 0; font-size: .88rem;
+        font-variant-numeric: tabular-nums; max-width: 100%; }
+th, td { padding: .35rem .7rem; border-bottom: 1px solid var(--rule); text-align: left; white-space: nowrap; }
+th { color: var(--ink2); font-weight: 600; border-bottom: 2px solid var(--rule); }
+blockquote { margin: .4rem 0 1.6rem; padding: .8rem 1rem; background: var(--note); border-radius: 6px;
+             border-left: 3px solid var(--accent); color: var(--ink); font-size: .95rem; }
+blockquote p { margin: .35rem 0; }
+.src { color: var(--ink2); font-size: .85rem; margin-top: 3rem; }
+</style></head>
+<body><main>
+<h1>QC report</h1>
+<p>Genomes requested: <strong>24</strong> (Bacteria: 20, Archaea: 4)</p>
+<table>
+<thead>
+<tr>
+<th>step</th>
+<th>Archaea</th>
+<th>Bacteria</th>
+<th>all</th>
+<th>% of requested</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fetched</td>
+<td>4</td>
+<td>20</td>
+<td>24</td>
+<td>100.0</td>
+</tr>
+<tr>
+<td>has_16s</td>
+<td>4</td>
+<td>20</td>
+<td>24</td>
+<td>100.0</td>
+</tr>
+<tr>
+<td>annotated</td>
+<td>4</td>
+<td>20</td>
+<td>24</td>
+<td>100.0</td>
+</tr>
+<tr>
+<td>in_features</td>
+<td>4</td>
+<td>20</td>
+<td>24</td>
+<td>100.0</td>
+</tr>
+<tr>
+<td>usable</td>
+<td>4</td>
+<td>20</td>
+<td>24</td>
+<td>100.0</td>
+</tr>
+<tr>
+<td>pcr_V3V4</td>
+<td>4</td>
+<td>20</td>
+<td>24</td>
+<td>100.0</td>
+</tr>
+<tr>
+<td>pcr_V4</td>
+<td>4</td>
+<td>20</td>
+<td>24</td>
+<td>100.0</td>
+</tr>
+</tbody>
+</table>
+<p><code>usable</code> = in the 16S feature matrix and has at least one KO annotation; these genomes enter modelling.
+<code>pcr_&lt;arm&gt;</code> = in-silico PCR success with that primer pair.</p>
+<p>Design expectation: usable &gt;= 90 % of requested. Observed: <strong>100.0 %</strong>.</p>
+<p class="src">Rendered from <code>qc_report.md</code>.</p>
+</main></body></html>

@@ -18,5 +18,6 @@ process QC_REPORT {
     """
     qc_report.py --genomes ${genomes} --fetch ${fetch_status} --stats ${stats} \\
         --targets ${targets} --features ${features} --sina ${sina_meta} --outdir qc
+    render_html.py qc/qc_report.md
     """
 }

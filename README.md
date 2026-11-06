@@ -28,7 +28,8 @@ git clone https://github.com/manuelgug/16s-function-inference && cd 16s-function
 
 ### Outputs
 - `results/<profile>/`: targets (KO, KEGG module, COG matrices), 16S alignment and allele features, QC, and Nextflow reports.
-- `reports/<profile>/`: the small summary files, committed to the repo.
+- `reports/<profile>/`: the summary reports, committed to the repo. Each report is a Markdown file plus a self-contained HTML twin (figures embedded and explained); open the `.html` in a browser. Start with `reports/pilot/pilot_report.html`.
+  To render a hand-written report: `apptainer exec .apptainer/ghcr.io-manuelgug-16s-function-inference-analysis-0.2.0.img python bin/render_html.py report.md`.
 
 ## Layout
 | Path | What |

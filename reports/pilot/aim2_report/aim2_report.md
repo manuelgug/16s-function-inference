@@ -2,13 +2,21 @@
 
 Genomes: 1795 (bacteria). Variants tested: 3252 (3106 unique patterns; Bonferroni threshold p < 1.61e-05). Phenotypes: 4233 KOs, 383 modules.
 
+Each test asks whether genomes that carry one 16S allele (a nucleotide at an aligned position) more often carry a function, after accounting for shared ancestry. Tool: pyseer linear mixed model; kinship from the GTDB bacterial tree. One test per phenotype × allele.
+
 ## Calibration
 
 ![lambda](fig1_lambda.png)
 
+> **Figure 1. Is the association test calibrated?** For each phenotype (a KO's presence, or a module's completeness), the genomic inflation factor λ compares the median association statistic over all tested alleles with its expectation when nothing is associated. The curves are normalised to the same area, so KOs and modules can be compared despite different counts.
+>
+> **How to read it:** λ ≈ 1 means the phylogenetic correction (the linear mixed model with GTDB-tree kinship) removes the inflation that shared ancestry causes; λ well above 1 would mean leftover population structure and false positives; λ below 1 means the test is conservative for that phenotype (less power, not false positives).
+>
+> **Here:** median λ is 0.94 for KOs; 65% of KOs have λ between 0.8 and 1.2.
+
 | kind | count | 10% | 50% | 90% |
 |---|---|---|---|---|
-| KO | 4.23e+03 | 0.595 | 0.936 | 1.18 |
+| KO | 4233 | 0.595 | 0.936 | 1.18 |
 | module | 383 | 0.676 | 0.986 | 1.2 |
 
 ## Significant associations
@@ -19,7 +27,13 @@ Alleles among hits that arose more than once on the tree (Fitch changes > 1): **
 
 ![hits](fig2_hits_along_16s.png)
 
-Top 30 hits:
+> **Figure 2. Where on the 16S the significant alleles sit.** Each bar counts Bonferroni-significant phenotype × allele pairs at one alignment position, in *E. coli* 16S numbering. Grey bands mark the nine variable regions V1-V9; the unshaded stretches are conserved regions.
+>
+> **How to read it:** tall bars are positions whose alleles track many functions at once. That is typical of alleles that mark a clade, whose members share many genes: a hotspot is not by itself evidence of a functional link. Peaks in conserved regions are more surprising than peaks in variable regions.
+>
+> **Here:** 43% of hits fall in variable regions, which hold 48% of tested alleles.
+
+Top 30 hits. `variant` = alignment column_state; `ecoli_pos` = E. coli position; `af` = allele frequency; `beta` = effect (positive: the allele goes with more of the function); `fitch_changes` = minimum number of times the allele arose or was lost on the tree.
 
 | phenotype | variant | ecoli_pos | state | af | beta | p | fitch_changes |
 |---|---|---|---|---|---|---|---|
@@ -55,6 +69,8 @@ Top 30 hits:
 | K14339 | 263_5352_G | 263 | G | 0.01 | -0.296 | 1.78e-26 | 11 |
 
 ## Controls
+
+Positive control: reverse gyrase (K03170) is found almost only in hyperthermophiles, whose rRNA is G/C-rich to stabilise its stems at high temperature. If the method works, alleles positively associated with K03170 should be G or C more often than tested alleles in general.
 
 | control | lambda | n_hits | n_positive | gc_fraction_positive_hits | gc_fraction_background | homoplasic_hits(>1 change) |
 |---|---|---|---|---|---|---|

@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cost report</title><style>
+:root { --bg:#fcfcfb; --surface:#ffffff; --ink:#1f1e1c; --ink2:#52514e; --rule:#e4e3df;
+        --accent:#2a78d6; --note:#f3f2ee; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+        --bg:#1b1b1a; --surface:#232322; --ink:#ecebe7; --ink2:#b3b1ab; --rule:#3a3936;
+        --accent:#6aa5ec; --note:#2b2a28; } }
+:root[data-theme="dark"] { --bg:#1b1b1a; --surface:#232322; --ink:#ecebe7; --ink2:#b3b1ab; --rule:#3a3936;
+        --accent:#6aa5ec; --note:#2b2a28; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 1.9rem; line-height: 1.25; margin: 0 0 1rem; }
+h2 { font-size: 1.35rem; margin: 2.4rem 0 .8rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.1rem; margin: 1.6rem 0 .6rem; }
+a { color: var(--accent); }
+code { font: .9em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--note);
+       padding: .1em .3em; border-radius: 4px; }
+img { display:block; max-width:100%; height:auto; margin: 1.2rem auto .4rem; border-radius: 6px;
+      border: 1px solid var(--rule); background:#fcfcfb; }
+table { display:block; overflow-x:auto; border-collapse: collapse; margin: 1rem 0; font-size: .88rem;
+        font-variant-numeric: tabular-nums; max-width: 100%; }
+th, td { padding: .35rem .7rem; border-bottom: 1px solid var(--rule); text-align: left; white-space: nowrap; }
+th { color: var(--ink2); font-weight: 600; border-bottom: 2px solid var(--rule); }
+blockquote { margin: .4rem 0 1.6rem; padding: .8rem 1rem; background: var(--note); border-radius: 6px;
+             border-left: 3px solid var(--accent); color: var(--ink); font-size: .95rem; }
+blockquote p { margin: .35rem 0; }
+.src { color: var(--ink2); font-size: .85rem; margin-top: 3rem; }
+</style></head>
+<body><main>
+<h1>Cost report</h1>
+<p>Measured on 2000 genomes. Wall hours are summed task time, not elapsed time (tasks overlap).</p>
+<table>
+<thead>
+<tr>
+<th>step</th>
+<th>tasks</th>
+<th>wall_h</th>
+<th>cpu_h</th>
+<th>scaling</th>
+<th>cpu_h_at_20000</th>
+<th>cpu_h_at_54963</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AIM1_PREDICT</td>
+<td>15</td>
+<td>0.61</td>
+<td>6.64</td>
+<td>~n log n (RF) to n^2 (k-NN)</td>
+<td>nan</td>
+<td>nan</td>
+</tr>
+<tr>
+<td>AIM1_REPORT</td>
+<td>1</td>
+<td>0.00</td>
+<td>0.00</td>
+<td>small</td>
+<td>nan</td>
+<td>nan</td>
+</tr>
+<tr>
+<td>AIM2_PREP</td>
+<td>1</td>
+<td>0.02</td>
+<td>0.02</td>
+<td>small</td>
+<td>nan</td>
+<td>nan</td>
+</tr>
+<tr>
+<td>AIM2_PYSEER</td>
+<td>64</td>
+<td>8.82</td>
+<td>8.77</td>
+<td>~n^2 per test (LMM)</td>
+<td>nan</td>
+<td>nan</td>
+</tr>
+<tr>
+<td>AIM2_REPORT</td>
+<td>1</td>
+<td>0.01</td>
+<td>0.01</td>
+<td>small</td>
+<td>nan</td>
+<td>nan</td>
+</tr>
+<tr>
+<td>ALIGN_16S</td>
+<td>1</td>
+<td>0.01</td>
+<td>0.09</td>
+<td>~linear</td>
+<td>nan</td>
+<td>nan</td>
+</tr>
+<tr>
+<td>BARRNAP</td>
+<td>20</td>
+<td>0.22</td>
+<td>1.42</td>
+<td>linear (per genome)</td>
+<td>14.15</td>
+<td>38.89</td>
+</tr>
+<tr>
+<td>BUILD_FEATURES</td>
+<td>1</td>
+<td>0.00</td>
+<td>0.00</td>
+<td>~linear</td>
+<td>nan</td>
+<td>nan</td>
+</tr>
+<tr>
+<td>BUILD_TARGETS</td>
+<td>1</td>
+<td>2.30</td>
+<td>2.30</td>
+<td>~linear</td>
+<td>nan</td>
+<td>nan</td>
+</tr>
+<tr>
+<td>EGGNOG</td>
+<td>20</td>
+<td>5.83</td>
+<td>154.57</td>
+<td>linear (per genome)</td>
+<td>1545.68</td>
+<td>4247.76</td>
+</tr>
+<tr>
+<td>FETCH_GENOMES</td>
+<td>20</td>
+<td>0.63</td>
+<td>0.01</td>
+<td>linear (per genome)</td>
+<td>0.11</td>
+<td>0.30</td>
+</tr>
+<tr>
+<td>MAKE_SPLITS</td>
+<td>1</td>
+<td>0.00</td>
+<td>0.00</td>
+<td>small</td>
+<td>nan</td>
+<td>nan</td>
+</tr>
+<tr>
+<td>PATRISTIC</td>
+<td>1</td>
+<td>0.02</td>
+<td>0.02</td>
+<td>n^2 memory (D063)</td>
+<td>nan</td>
+<td>nan</td>
+</tr>
+<tr>
+<td>PICRUST2</td>
+<td>1</td>
+<td>0.22</td>
+<td>0.92</td>
+<td>~linear + fixed reference cost</td>
+<td>nan</td>
+<td>nan</td>
+</tr>
+<tr>
+<td>PICRUST2_EVAL</td>
+<td>1</td>
+<td>0.00</td>
+<td>0.00</td>
+<td>small</td>
+<td>nan</td>
+<td>nan</td>
+</tr>
+<tr>
+<td>PROCESS_GENOMES</td>
+<td>20</td>
+<td>0.16</td>
+<td>0.98</td>
+<td>linear (per genome)</td>
+<td>9.77</td>
+<td>26.86</td>
+</tr>
+<tr>
+<td>QC_REPORT</td>
+<td>1</td>
+<td>0.00</td>
+<td>0.00</td>
+<td>small</td>
+<td>nan</td>
+<td>nan</td>
+</tr>
+</tbody>
+</table>
+<p>Per-genome steps: 282.5 CPU-seconds per genome.
+- 20000 genomes: ~1570 CPU-hours for per-genome steps (~49 h on 32 cores).
+- 54963 genomes: ~4314 CPU-hours for per-genome steps (~135 h on 32 cores).</p>
+<p class="src">Rendered from <code>cost.md</code>.</p>
+</main></body></html>

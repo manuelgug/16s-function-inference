@@ -2,8 +2,8 @@
 
 **Living tracker.** Read this first when resuming, on any machine or in any session. Update it whenever a task changes state, then commit and push. Uncommitted status is lost status.
 
-- **Last updated:** 2026-11-05 by Claude Code (Opus 5.5)
-- **Current phase:** P4 — pilot done, report written; waiting for the user's full-scale decision
+- **Last updated:** 2026-11-06 by Claude Code (Opus 5.5)
+- **Current phase:** P4 — pilot done, reports (HTML) + PICRUSt2 comparison written; waiting for the user's review and full-scale decision
 - **Blocking:** nothing
 
 Legend: `[ ]` todo · `[~]` in flight · `[x]` done · `[!]` blocked · `[-]` dropped
@@ -13,7 +13,7 @@ Every decision goes into [DECISIONS.md](DECISIONS.md) when it is made.
 For in-flight tasks, record machine, start date and how to resume. A long run is resumed with `./run.sh <profile>`; Nextflow `-resume` skips finished work.
 
 ## Next action
-Waiting for the user's decisions on the open questions in `reports/pilot/pilot_report.md` §6 (scale: 55k or 20k; Aim 2 sample size; Aim 2 homoplasy criterion; D048/D060/D019). Then do the pre-full-scale engineering in §5: Aim 2 subsample + pyseer `--save-lmm`, chunked PICRUSt2, nearest-relative tree distances. Then launch `./run.sh full`.
+User reviews `reports/pilot/pilot_report.html` and `reports/pilot/picrust2_comparison/picrust2_comparison.html`. Then the user decides the open questions in pilot report §7 (scale: 55k or 20k; Aim 2 sample size; Aim 2 homoplasy criterion; optional PICRUSt2 with our reference; D048/D060/D019). Then do the pre-full-scale engineering in §6: Aim 2 subsample + pyseer `--save-lmm`, chunked PICRUSt2 (and comparison), nearest-relative tree distances. Then launch `./run.sh full`.
 
 ## Tasks
 
@@ -54,8 +54,9 @@ Waiting for the user's decisions on the open questions in `reports/pilot/pilot_r
 - [x] Commit `reports/pilot/`
 
 ### P4 — Pilot report and scale decision
-- [x] Pilot report: `reports/pilot/pilot_report.md`
-- [~] User decides full-scale scope (questions in report §6)
+- [x] Pilot report: `reports/pilot/pilot_report.md` (+ HTML twin of every report, D069)
+- [x] PICRUSt2 head-to-head with ordination + PERMANOVA/ANOSIM/PERMDISP: `reports/pilot/picrust2_comparison/` (D074–D077); summary in pilot report §5
+- [~] User reviews the HTML reports, then decides full-scale scope (questions in report §7)
 
 ### P5 / P6 — Full scale and final report
 - [ ] Defined after P4
@@ -63,6 +64,7 @@ Waiting for the user's decisions on the open questions in `reports/pilot/pilot_r
 ## Log
 Append-only. Newest first.
 
+- 2026-11-06: Pilot resume finished (90 tasks, 0 failed; FETCH/PROCESS/eggNOG cached thanks to D072). All reports rendered to HTML. PICRUSt2 comparison: overall tie on unseen genomes (KO F1 5-NN 0.785 vs 0.783); ours better for novel genomes, Archaea, CPR, per-KO ranking and between-genome structure; PICRUSt2 better near its reference.
 - 2026-11-05: P3 code done and tested on test profile (Aim 1 + report, PICRUSt2 M2, tree distances, Aim 2, cost script). Benchmarked eggNOG `--dmnd_iterate no`: 2× slower, kept default (D066). Pilot eggNOG in progress.
 - 2026-11-05: `./run.sh test` passes end to end (Apptainer). Fixed SINA CSV header issue and Nextflow value channels. Aim 1 wired in. Pilot started. Decisions D046–D053 (D048 deviates from the design: fixed hyperparameters in pilot).
 - 2026-11-05: Scaffold written and pushed. Test-profile dev run (Docker) works through SINA alignment; eggNOG DB still downloading. Decisions D033–D045.

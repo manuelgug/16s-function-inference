@@ -56,5 +56,6 @@ process AIM1_REPORT {
     """
     aim1_report.py --runs ${runs} --outdir aim1_report --seed ${params.seed} \
         --patristic ${patristic} --splits ${splits} --picrust2 ${picrust2}
+    render_html.py aim1_report/aim1_report.md
     """
 }

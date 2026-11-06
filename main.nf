@@ -14,7 +14,7 @@ include { BUILD_FEATURES        } from './modules/build_features'
 include { QC_REPORT             } from './modules/qc_report'
 include { MAKE_SPLITS; AIM1_PREDICT; AIM1_REPORT } from './modules/aim1'
 include { AIM2_PREP; AIM2_PYSEER; AIM2_REPORT } from './modules/aim2'
-include { PICRUST2; PICRUST2_EVAL; PATRISTIC } from './modules/m2_phylo'
+include { PICRUST2; PICRUST2_EVAL; PICRUST2_COMPARE; PATRISTIC } from './modules/m2_phylo'
 
 workflow {
     def required = ['gtdb_release', 'silva_release', 'min_completeness', 'max_contamination', 'min_ssu_len',
@@ -71,7 +71,9 @@ workflow {
     PATRISTIC(file("${gtdb}/bac120_r${params.gtdb_release}.tree", checkIfExists: true),
               file("${gtdb}/ar53_r${params.gtdb_release}.tree", checkIfExists: true), QC_REPORT.out)
     PICRUST2(ssu)
-    PICRUST2_EVAL(PICRUST2.out, BUILD_TARGETS.out)
+    PICRUST2_EVAL(PICRUST2.out.pred, BUILD_TARGETS.out)
+    PICRUST2_COMPARE(PICRUST2.out.pred, PICRUST2.out.ko_names, BUILD_TARGETS.out,
+                     AIM1_PREDICT.out.filter { d -> d.name == 'full_random' }, genome_list)
     AIM1_REPORT(AIM1_PREDICT.out.collect(), PATRISTIC.out, MAKE_SPLITS.out, PICRUST2_EVAL.out)
 
     // --- Aim 2: association beyond phylogeny (pyseer LMM), bacteria only ---

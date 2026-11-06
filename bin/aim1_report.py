@@ -185,6 +185,79 @@ def fig_arms(gn, out, model="M3_rf"):
     plt.close(fig)
     return pd.DataFrame(rows)
 
+# Figure explanations: rendered as a blockquote under each image (render_html.py styles them).
+PANELS = ("Panels: **KO set F1** = overlap between the predicted and the true set of KEGG orthologs of a genome "
+          "(1 = perfect); **module completeness MAE** = mean absolute error of predicted KEGG module completeness "
+          "(0-1 scale; 0 = perfect); **COG profile Bray-Curtis** = dissimilarity between predicted and true "
+          "COG-category composition (0 = identical).")
+MODELS = ("Models: **null** = training-set prevalence or mean, ignores the 16S (dashed grey); **1-NN / 5-NN** = copy "
+          "the function profile of the 1 or 5 training genomes with the most similar 16S; **random forest / "
+          "LightGBM** = learned from aligned 16S positions (LightGBM is fitted for modules and COGs only).")
+
+
+def quote(*paras):
+    return "\n>\n".join("> " + p for p in paras)
+
+
+def caption_fig1(c):
+    k = c[(c.target_type == "ko") & (c.metric == "f1")]
+    best = k[k.model != "M0_null"].groupby("bin", observed=True)["mean"].max()
+    null = k[k.model == "M0_null"]["mean"]
+    return quote(
+        "**Figure 1. Accuracy against 16S similarity to the closest training genome.** Every test genome is "
+        "placed in a bin by the full-length 16S identity to its most similar genome in the training folds "
+        "(all holdout levels pooled, so each genome counts once per level; n under each bin). Each point is the mean per-genome score in that bin.",
+        PANELS, MODELS,
+        "**How to read it:** the distance between a model line and the dashed null line is what the 16S adds. "
+        "Lines that slope towards perfect (up for F1, down for the errors) mean predictions are only as good as "
+        "the nearest relative in the reference.",
+        f"**Here:** the best KO F1 goes from {best.iloc[0]:.2f} in the lowest-identity bin ({best.index[0]} %) to "
+        f"{best.iloc[-1]:.2f} at {best.index[-1]} %, while the null stays between {null.min():.2f} and {null.max():.2f}.")
+
+
+def caption_fig2(b):
+    k = b[(b.target_type == "ko") & (b.metric == "f1")].set_index(["model", "level"])["mean_gain"]
+    rf = k.get("M3_rf")
+    here = (f"**Here:** random forest KO F1 gain is {rf.get('random', float('nan')):.3f} on a random split and "
+            f"{rf.get('class', float('nan')):.3f} when whole classes are held out." if rf is not None else "")
+    return quote(
+        "**Figure 2. Gain over the null model, by how distant the test genomes are from the training data.** "
+        "Each holdout level keeps whole taxa out of training: *random* = ordinary 5-fold split; *genus* ... *class* "
+        "= every genome of the test genus (or family, order, class) is unseen during training. Points are mean "
+        "per-genome gain over the null (positive = better than ignoring the 16S); bars are 95 % bootstrap CIs.",
+        PANELS, MODELS,
+        "**How to read it:** the left-to-right decline shows how fast 16S-based prediction degrades for "
+        "organisms with no close relative in the reference. A point at 0 means no better than the null.", here)
+
+
+def caption_fig3(a):
+    k = a[(a.target_type == "ko") & (a.metric == "f1")].set_index(["arm", "level"])["mean_gain"]
+    rows = [f"{lv}: full {k.get(('full', lv), float('nan')):.3f}, "
+            + ", ".join(f"{arm} {k.get((arm, lv), float('nan')):.3f}" for arm in sorted(set(a.arm) - {"full"}))
+            for lv in ("random", "class")]
+    return quote(
+        "**Figure 3. Full-length 16S against in-silico amplicons.** The random forest is trained and tested on "
+        "the full gene (*full*) or only on the region a primer pair would amplify (in-silico PCR with the primers "
+        "in `primers.tsv`). Genomes whose 16S does not amplify are left out of that arm. Points are mean gain over "
+        "the null, per holdout level.",
+        PANELS,
+        "**How to read it:** the gap between the *full* line and an amplicon line is the information lost by "
+        "sequencing only that region.",
+        "**Here (KO F1 gain):** " + "; ".join(rows) + ".")
+
+
+def caption_fig4(c, labels, rho):
+    k = c[(c.target_type == "ko") & (c.metric == "f1") & (c.model != "M0_null")].groupby("bin", observed=True)["mean"].max()
+    return quote(
+        "**Figure 4. The same accuracy curves against evolutionary distance on the GTDB tree.** The x axis is the "
+        "patristic distance (sum of branch lengths, substitutions per site on the GTDB marker-protein tree) from "
+        "each test genome to its closest training genome, cut into five equal-count bins (quintiles). Archaea and "
+        "bacteria sit on separate trees, so each genome's nearest relative is searched within its domain.",
+        PANELS, MODELS,
+        "**How to read it:** if this figure looks like figure 1 mirrored, 16S identity is mostly a proxy for "
+        f"phylogenetic distance. Spearman correlation of the two distances: {rho:.2f}.",
+        f"**Here:** the best KO F1 falls from {k.iloc[0]:.2f} (closest quintile) to {k.iloc[-1]:.2f} (most distant).")
+
 
 def md_table(df, floatfmt=".3f"):
     cols = list(df.columns)
@@ -228,13 +301,14 @@ def main(argv=None):
         qs = np.nanquantile(near.loc[near.arm == "full", "nn_patristic"], [0, .2, .4, .6, .8, 1])
         qs[-1] += 1e-6
         labels = [f"{lo:.2f}-{hi:.2f}" for lo, hi in zip(qs[:-1], qs[1:])]
-        fig_distance(g, near, out, "nn_patristic", qs, labels, "GTDB-tree distance to nearest training genome "
-                     "(quintiles)", "fig4_accuracy_vs_tree_distance.png").to_csv(out / "fig4_data.tsv", sep="\t", index=False)
+        c4 = fig_distance(g, near, out, "nn_patristic", qs, labels, "GTDB-tree distance to nearest training genome",
+                          "fig4_accuracy_vs_tree_distance.png")
+        c4.to_csv(out / "fig4_data.tsv", sep="\t", index=False)
         full = near[near.arm == "full"].dropna(subset=["nn_patristic"])
         rho = full[["nn_identity", "nn_patristic"]].corr(method="spearman").iloc[0, 1]
         phylo_lines = ["## Accuracy vs GTDB-tree distance (full length)", "",
                        f"Spearman correlation between 16S identity and tree distance to the nearest training "
-                       f"genome: {rho:.3f}.", "", "![fig4](fig4_accuracy_vs_tree_distance.png)", ""]
+                       f"genome: {rho:.3f}.", "", "![fig4](fig4_accuracy_vs_tree_distance.png)", "", caption_fig4(c4, labels, rho), ""]
     pc_lines = []
     if a.picrust2:
         pc = pd.read_csv(a.picrust2, sep="\t")
@@ -248,7 +322,12 @@ def main(argv=None):
         both = both.reset_index()
         pc_lines = ["## PICRUSt2 (M2) out of the box: external reference only", "",
                     "Its reference genomes overlap the test genomes, so these scores are optimistic (DESIGN §4.1). "
-                    "Our models shown at the random holdout level, the closest comparison.", "",
+                    "Our models shown at the random holdout level, the closest comparison. "
+                    "PICRUSt2 places each 16S in its own reference tree and predicts KO copy numbers by "
+                    "hidden-state prediction; a KO counts as predicted when its copy number is >= 1. Rows split "
+                    "the genomes by whether the genome itself is in PICRUSt2's reference (same GTDB accession; leakage). "
+                    "NSTI = tree distance to the closest reference genome. Full head-to-head: "
+                    "[PICRUSt2 comparison](../picrust2_comparison/picrust2_comparison.md).", "",
                     md_table(both.round(3)), ""]
     by_level = fig_gain_by_level(gn, rng, a.boot, out)
     by_level.to_csv(out / "fig2_data.tsv", sep="\t", index=False)
@@ -265,20 +344,28 @@ def main(argv=None):
         f"Genomes: {g.accession.nunique()}. Arms: {', '.join(sorted(g.arm.unique()))}. "
         f"Levels: {', '.join(l for l in LEVELS if l in g.level.unique())}.", "",
         "## 16S identity to the nearest training genome (full length)", "",
+        "How close each test genome's 16S is to its most similar training genome, per holdout level "
+        "(quantiles over genomes). Stricter holdouts push test genomes further from the training data.", "",
         md_table(nn[["level", "count", "10%", "50%", "90%"]]), "",
         "## Accuracy vs 16S identity (full length, all levels pooled)", "",
-        "![fig1](fig1_accuracy_vs_identity.png)", "",
+        "![fig1](fig1_accuracy_vs_identity.png)", "", caption_fig1(curve), "",
         *phylo_lines,
         "## Gain over the null model by holdout level (full length)", "",
-        "![fig2](fig2_gain_over_null_by_level.png)", "",
+        "![fig2](fig2_gain_over_null_by_level.png)", "", caption_fig2(by_level), "",
         md_table(by_level.round(4)), "",
         "## Learned models vs k-NN (paired per genome; positive = learned model better)", "",
+        "Same genomes, same folds: mean per-genome difference between a learned model and a k-NN model, with 95 % "
+        "bootstrap CI and Wilcoxon signed-rank p. Positive means the learned model is better (errors are sign-flipped). "
+        "This tests whether learning from individual 16S positions adds anything over copying the closest relatives.", "",
         md_table(comps[comps.apply(lambda r: (r.target_type, r.metric) in head, axis=1)]
                  .drop(columns=["target_type"]).round(4)), "",
         "## Amplicon arms (random forest gain over null)", "",
-        "![fig3](fig3_amplicon_arms.png)", "",
+        "![fig3](fig3_amplicon_arms.png)", "", caption_fig3(arms), "",
         md_table(arms.round(4)), "",
         "## KO prediction: median per-KO AUROC (pooled over folds)", "",
+        "For each KO, how well the predicted score ranks genomes that have it above genomes that lack it (0.5 = "
+        "chance, 1 = perfect); median over KOs. The null predicts one constant per fold, so its pooled AUROC can fall "
+        "below 0.5 when held-out clades differ from the training prevalence; it is shown only for reference.", "",
         md_table(auroc.round(3)), "",
         *pc_lines,
         "Tables behind every figure are in the `fig*_data.tsv` files next to this report.",

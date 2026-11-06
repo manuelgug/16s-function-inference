@@ -4,6 +4,8 @@ Genomes: 24. Arms: V3V4, V4, full. Levels: random, genus, family, order, class.
 
 ## 16S identity to the nearest training genome (full length)
 
+How close each test genome's 16S is to its most similar training genome, per holdout level (quantiles over genomes). Stricter holdouts push test genomes further from the training data.
+
 | level | count | 10% | 50% | 90% |
 |---|---|---|---|---|
 | class | 24.000 | 0.767 | 0.808 | 0.835 |
@@ -16,15 +18,45 @@ Genomes: 24. Arms: V3V4, V4, full. Levels: random, genus, family, order, class.
 
 ![fig1](fig1_accuracy_vs_identity.png)
 
+> **Figure 1. Accuracy against 16S similarity to the closest training genome.** Every test genome is placed in a bin by the full-length 16S identity to its most similar genome in the training folds (all holdout levels pooled, so each genome counts once per level; n under each bin). Each point is the mean per-genome score in that bin.
+>
+> Panels: **KO set F1** = overlap between the predicted and the true set of KEGG orthologs of a genome (1 = perfect); **module completeness MAE** = mean absolute error of predicted KEGG module completeness (0-1 scale; 0 = perfect); **COG profile Bray-Curtis** = dissimilarity between predicted and true COG-category composition (0 = identical).
+>
+> Models: **null** = training-set prevalence or mean, ignores the 16S (dashed grey); **1-NN / 5-NN** = copy the function profile of the 1 or 5 training genomes with the most similar 16S; **random forest / LightGBM** = learned from aligned 16S positions (LightGBM is fitted for modules and COGs only).
+>
+> **How to read it:** the distance between a model line and the dashed null line is what the 16S adds. Lines that slope towards perfect (up for F1, down for the errors) mean predictions are only as good as the nearest relative in the reference.
+>
+> **Here:** the best KO F1 goes from 0.55 in the lowest-identity bin (<85 %) to nan at >=99 %, while the null stays between 0.49 and 0.55.
+
 ## Accuracy vs GTDB-tree distance (full length)
 
 Spearman correlation between 16S identity and tree distance to the nearest training genome: -0.789.
 
 ![fig4](fig4_accuracy_vs_tree_distance.png)
 
+> **Figure 4. The same accuracy curves against evolutionary distance on the GTDB tree.** The x axis is the patristic distance (sum of branch lengths, substitutions per site on the GTDB marker-protein tree) from each test genome to its closest training genome, cut into five equal-count bins (quintiles). Archaea and bacteria sit on separate trees, so each genome's nearest relative is searched within its domain.
+>
+> Panels: **KO set F1** = overlap between the predicted and the true set of KEGG orthologs of a genome (1 = perfect); **module completeness MAE** = mean absolute error of predicted KEGG module completeness (0-1 scale; 0 = perfect); **COG profile Bray-Curtis** = dissimilarity between predicted and true COG-category composition (0 = identical).
+>
+> Models: **null** = training-set prevalence or mean, ignores the 16S (dashed grey); **1-NN / 5-NN** = copy the function profile of the 1 or 5 training genomes with the most similar 16S; **random forest / LightGBM** = learned from aligned 16S positions (LightGBM is fitted for modules and COGs only).
+>
+> **How to read it:** if this figure looks like figure 1 mirrored, 16S identity is mostly a proxy for phylogenetic distance. Spearman correlation of the two distances: -0.79.
+>
+> **Here:** the best KO F1 falls from 0.67 (closest quintile) to 0.50 (most distant).
+
 ## Gain over the null model by holdout level (full length)
 
 ![fig2](fig2_gain_over_null_by_level.png)
+
+> **Figure 2. Gain over the null model, by how distant the test genomes are from the training data.** Each holdout level keeps whole taxa out of training: *random* = ordinary 5-fold split; *genus* ... *class* = every genome of the test genus (or family, order, class) is unseen during training. Points are mean per-genome gain over the null (positive = better than ignoring the 16S); bars are 95 % bootstrap CIs.
+>
+> Panels: **KO set F1** = overlap between the predicted and the true set of KEGG orthologs of a genome (1 = perfect); **module completeness MAE** = mean absolute error of predicted KEGG module completeness (0-1 scale; 0 = perfect); **COG profile Bray-Curtis** = dissimilarity between predicted and true COG-category composition (0 = identical).
+>
+> Models: **null** = training-set prevalence or mean, ignores the 16S (dashed grey); **1-NN / 5-NN** = copy the function profile of the 1 or 5 training genomes with the most similar 16S; **random forest / LightGBM** = learned from aligned 16S positions (LightGBM is fitted for modules and COGs only).
+>
+> **How to read it:** the left-to-right decline shows how fast 16S-based prediction degrades for organisms with no close relative in the reference. A point at 0 means no better than the null.
+>
+> **Here:** random forest KO F1 gain is 0.037 on a random split and 0.015 when whole classes are held out.
 
 | target_type | metric | model | level | mean_gain | ci_lo | ci_hi | n |
 |---|---|---|---|---|---|---|---|
@@ -85,6 +117,8 @@ Spearman correlation between 16S identity and tree distance to the nearest train
 | cog | bray_curtis | M4_lgbm | class | -0.004 | -0.010 | 0.002 | 24 |
 
 ## Learned models vs k-NN (paired per genome; positive = learned model better)
+
+Same genomes, same folds: mean per-genome difference between a learned model and a k-NN model, with 95 % bootstrap CI and Wilcoxon signed-rank p. Positive means the learned model is better (errors are sign-flipped). This tests whether learning from individual 16S positions adds anything over copying the closest relatives.
 
 | arm | level | metric | comparison | n | mean_diff | ci_lo | ci_hi | wilcoxon_p |
 |---|---|---|---|---|---|---|---|---|
@@ -213,6 +247,14 @@ Spearman correlation between 16S identity and tree distance to the nearest train
 
 ![fig3](fig3_amplicon_arms.png)
 
+> **Figure 3. Full-length 16S against in-silico amplicons.** The random forest is trained and tested on the full gene (*full*) or only on the region a primer pair would amplify (in-silico PCR with the primers in `primers.tsv`). Genomes whose 16S does not amplify are left out of that arm. Points are mean gain over the null, per holdout level.
+>
+> Panels: **KO set F1** = overlap between the predicted and the true set of KEGG orthologs of a genome (1 = perfect); **module completeness MAE** = mean absolute error of predicted KEGG module completeness (0-1 scale; 0 = perfect); **COG profile Bray-Curtis** = dissimilarity between predicted and true COG-category composition (0 = identical).
+>
+> **How to read it:** the gap between the *full* line and an amplicon line is the information lost by sequencing only that region.
+>
+> **Here (KO F1 gain):** random: full 0.037, V3V4 0.027, V4 0.025; class: full 0.015, V3V4 0.007, V4 0.007.
+
 | target_type | metric | arm | level | mean_gain |
 |---|---|---|---|---|
 | ko | f1 | full | random | 0.037 |
@@ -263,6 +305,8 @@ Spearman correlation between 16S identity and tree distance to the nearest train
 
 ## KO prediction: median per-KO AUROC (pooled over folds)
 
+For each KO, how well the predicted score ranks genomes that have it above genomes that lack it (0.5 = chance, 1 = perfect); median over KOs. The null predicts one constant per fold, so its pooled AUROC can fall below 0.5 when held-out clades differ from the training prevalence; it is shown only for reference.
+
 | arm | level | M0_null | M1_knn1 | M1_knn5 | M3_rf |
 |---|---|---|---|---|---|
 | V3V4 | class | 0.226 | 0.500 | 0.507 | 0.398 |
@@ -283,7 +327,7 @@ Spearman correlation between 16S identity and tree distance to the nearest train
 
 ## PICRUSt2 (M2) out of the box: external reference only
 
-Its reference genomes overlap the test genomes, so these scores are optimistic (DESIGN §4.1). Our models shown at the random holdout level, the closest comparison.
+Its reference genomes overlap the test genomes, so these scores are optimistic (DESIGN §4.1). Our models shown at the random holdout level, the closest comparison. PICRUSt2 places each 16S in its own reference tree and predicts KO copy numbers by hidden-state prediction; a KO counts as predicted when its copy number is >= 1. Rows split the genomes by whether PICRUSt2's closest reference genome is the genome itself (leakage). NSTI = tree distance to the closest reference genome.
 
 | model | f1 | jaccard | nsti | n_genomes |
 |---|---|---|---|---|

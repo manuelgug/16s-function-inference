@@ -15,6 +15,7 @@ Outputs (outdir):
   genome_metrics.tsv  accession, fold, model, target_type, metric, value   (per test genome)
   target_metrics.tsv  target, target_type, model, metric, value            (pooled over folds)
   nearest.tsv         accession, fold, nn_identity                         (16S identity to closest training genome)
+  predictions/<model>_<target_type>.parquet   out-of-fold predictions, genome x target (KO: probability; modules: completeness; COG: fraction)
 """
 import argparse
 from pathlib import Path
@@ -194,6 +195,12 @@ def main(argv=None):
         for j, ms in target_metrics(ttype, Y, P).items():
             t_rows += [{"target": T.columns[j], "target_type": ttype, "model": model, "metric": k, "value": v}
                        for k, v in ms.items()]
+
+    # out-of-fold predictions, for inspection and the PICRUSt2 comparison: one genome x target table per model
+    (out / "predictions").mkdir(exist_ok=True)
+    for (model, ttype), P in preds.items():
+        pd.DataFrame(P, index=X.index, columns=targets[ttype].columns).to_parquet(
+            out / "predictions" / f"{model}_{ttype}.parquet", compression="zstd")
 
     meta = {"arm": a.arm, "level": a.level}
     pd.concat(g_rows).assign(**meta).to_csv(out / "genome_metrics.tsv", sep="\t", index=False)
