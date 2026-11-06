@@ -37,7 +37,8 @@ def main(argv=None):
     a = ap.parse_args(argv)
 
     t = pd.concat(pd.read_csv(f, sep="\t") for f in a.trace)
-    t = t[t.status.isin(["COMPLETED", "CACHED"])].drop_duplicates("hash", keep="last")
+    # one row per logical task: a task re-run in a later trace (resume after a config change) counts once
+    t = t[t.status.isin(["COMPLETED", "CACHED"])].drop_duplicates("name", keep="last")
     t["step"] = t["name"].str.split(" ").str[0].str.split(":").str[-1]
     t["wall_s"] = t["realtime"].map(seconds)
     t["cpu_h"] = t["wall_s"] * pd.to_numeric(t["%cpu"].astype(str).str.rstrip("%"), errors="coerce").fillna(100) / 100 / 3600

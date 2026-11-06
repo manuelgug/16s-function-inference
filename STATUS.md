@@ -3,7 +3,7 @@
 **Living tracker.** Read this first when resuming, on any machine or in any session. Update it whenever a task changes state, then commit and push. Uncommitted status is lost status.
 
 - **Last updated:** 2026-11-05 by Claude Code (Opus 5.5)
-- **Current phase:** P2 — pilot data run (in flight); P3 code in progress
+- **Current phase:** P4 — pilot done, report written; waiting for the user's full-scale decision
 - **Blocking:** nothing
 
 Legend: `[ ]` todo · `[~]` in flight · `[x]` done · `[!]` blocked · `[-]` dropped
@@ -13,7 +13,7 @@ Every decision goes into [DECISIONS.md](DECISIONS.md) when it is made.
 For in-flight tasks, record machine, start date and how to resume. A long run is resumed with `./run.sh <profile>`; Nextflow `-resume` skips finished work.
 
 ## Next action
-Pilot is running (`./run.sh pilot`, detached; console log `results/pilot/console.log`). It was launched before Aim 1 report, Aim 2, PICRUSt2 and tree distances were wired in: **when it finishes, run `./run.sh pilot` again** (everything finished is cached; only new steps run). Then: cost report (`scripts/cost_report.py`), disk usage, pilot report (P4). Meanwhile: finish the fresh-clone test, then write the Aim 1 report and Aim 2. Note for the report: null-model COG Spearman is already ~0.9, so report gain over null.
+Waiting for the user's decisions on the open questions in `reports/pilot/pilot_report.md` §6 (scale: 55k or 20k; Aim 2 sample size; Aim 2 homoplasy criterion; D048/D060/D019). Then do the pre-full-scale engineering in §5: Aim 2 subsample + pyseer `--save-lmm`, chunked PICRUSt2, nearest-relative tree distances. Then launch `./run.sh full`.
 
 ## Tasks
 
@@ -40,9 +40,9 @@ Pilot is running (`./run.sh pilot`, detached; console log `results/pilot/console
 
 ### P2 — Pilot data (~2k genomes)
 - [x] User suggestion: eggNOG without DIAMOND `--iterate`. Tested: 2.0× slower here, KOs near-identical (Jaccard 0.975) → kept `--iterate` (D066). Pilot unchanged.
-- [~] `./run.sh pilot` running (started 2026-11-05 on this workstation; log `results/pilot/.nextflow.log`). Expect ~9 h of eggNOG (2,000 × 15.6 s). Resume: `./run.sh pilot`
-- [ ] Record runtime/disk per step from `results/pilot/pipeline_info/trace_*.tsv`
-- [ ] QC report: 16S yield, annotation yield, sample composition
+- [x] `./run.sh pilot` finished 2026-11-06: 8 h 46 m + 1 h 05 m resume, 0 failed tasks
+- [x] Runtime/disk per step: `reports/pilot/cost.md`, report §1–2
+- [x] QC report: 1,999/2,000 usable (`reports/pilot/qc/qc_report.md`)
 
 ### P3 — Pilot analysis
 - [x] CV split script + module (`bin/make_splits.py`), tested
@@ -51,11 +51,11 @@ Pilot is running (`./run.sh pilot`, detached; console log `results/pilot/console
 - [x] M2 PICRUSt2 step + evaluation, leak flagged per genome (D064)
 - [x] GTDB-tree distance to nearest training genome (Fig 4 in Aim 1 report) (D063)
 - [x] Aim 2 code (`bin/aim2_prep.py`, `bin/aim2_report.py`, `modules/aim2.nf`): tested; test profile runs end to end (n=20 → 95 % of tests flagged by pyseer, as expected)
-- [ ] Commit `reports/pilot/`
+- [x] Commit `reports/pilot/`
 
 ### P4 — Pilot report and scale decision
-- [ ] Pilot report (engineering, cost extrapolation, yield, signal)
-- [ ] User decides full-scale scope
+- [x] Pilot report: `reports/pilot/pilot_report.md`
+- [~] User decides full-scale scope (questions in report §6)
 
 ### P5 / P6 — Full scale and final report
 - [ ] Defined after P4
