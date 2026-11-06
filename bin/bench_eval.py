@@ -220,18 +220,18 @@ def resources(traces):
     t["process"] = t.name.str.replace(r" \(.*\)$", "", regex=True)
 
     def to_s(x):
-        x = str(x)
-        tot = 0.0
-        for v, u in [(float(p[:-2]), "ms") if p.endswith("ms") else (float(p[:-1]), p[-1]) for p in x.split()]:
-            tot += v * {"ms": 1e-3, "s": 1, "m": 60, "h": 3600, "d": 86400}[u]
-        return tot
+        unit = {"ms": 1e-3, "s": 1, "m": 60, "h": 3600, "d": 86400}
+        try:
+            return sum(float(p[:-2]) * unit["ms"] if p.endswith("ms") else float(p[:-1]) * unit[p[-1]]
+                       for p in str(x).split())
+        except (ValueError, KeyError):  # "-" or an unexpected format
+            return np.nan
 
     def to_gb(x):
-        x = str(x)
-        if x in ("-", "nan"):
-            return np.nan
-        v, u = x.split()
-        return float(v) * {"B": 1e-9, "KB": 1e-6, "MB": 1e-3, "GB": 1, "TB": 1e3}[u]
+        parts = str(x).split()
+        if len(parts) != 2:            # "-", "nan" or a bare "0" (no memory recorded)
+            return float(parts[0]) * 1e-9 if parts and parts[0].replace(".", "", 1).isdigit() else np.nan
+        return float(parts[0]) * {"B": 1e-9, "KB": 1e-6, "MB": 1e-3, "GB": 1, "TB": 1e3}[parts[1]]
     t["realtime_s"] = t.realtime.map(to_s)
     t["cpu_h"] = t.realtime_s * t["%cpu"].astype(str).str.rstrip("%").astype(float) / 100 / 3600
     t["peak_gb"] = t.peak_rss.map(to_gb)

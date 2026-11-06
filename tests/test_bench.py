@@ -107,3 +107,17 @@ def test_weighted_median_of_neighbours():
     nbr = np.array([[0, 1, 2, -1, -1], [3, -1, -1, -1, -1], [-1, -1, -1, -1, -1]])
     w = np.array([[1, 1, 5, 0, 0], [1, 0, 0, 0, 0], [0, 0, 0, 0, 0]], float)
     assert weighted_median(vals, nbr, w, 5).tolist() == [7.0, 4.0, 1.0]
+
+
+def test_da_calls_match_one_test_per_function():
+    from scipy.stats import mannwhitneyu
+
+    from community import bh, da_calls
+    rng = np.random.default_rng(0)
+    X = rng.lognormal(size=(40, 300))
+    X[:, :5] = 0                                  # constant functions are never called
+    group = np.arange(40) >= 20
+    X[np.ix_(group, np.arange(5, 40))] *= 20      # real differences
+    loop = [mannwhitneyu(x[group], x[~group]).pvalue if x.std() > 0 else 1.0 for x in X.T]
+    assert (da_calls(X, group) == (bh(loop) < 0.05)).all()
+    assert da_calls(X, group)[5:40].mean() > 0.8 and not da_calls(X, group)[:5].any()

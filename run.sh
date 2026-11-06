@@ -51,6 +51,7 @@ KO_MAX_PREVALENCE=0.95
 # --- Benchmark (DESIGN §B, BENCHMARK.md) ---
 HOLDOUT_LEVELS="random,genus,family,order,class"   # whole taxa held out per fold (random = species)
 CV_FOLDS=5
+BENCH_FOLDS="0,1,2,3,4"     # folds to run (e.g. "0" for exploration; the rest reuse its cached tasks later)
 BENCH_PHASE=dev             # dev: develop + tune on dev families | confirm: frozen settings, confirm families, once
 BENCH_ARMS="full,V4,V3V4"   # full-length 16S and the amplicons named in PRIMERS
 BENCH_P2_METHODS="mp,emp_prob,pic,subtree_average"   # PICRUSt2 hidden-state prediction settings, all run
@@ -140,6 +141,7 @@ cat > "$RUN_DIR/params.json" <<EOF
   "bench_stacker_genomes": $BENCH_STACKER_GENOMES,
   "bench_boot": $BENCH_BOOT,
   "bench_frozen": "$BENCH_FROZEN",
+  "bench_folds": "$BENCH_FOLDS",
   "batch_size": $BATCH_SIZE,
   "max_cpus": $MAX_CPUS,
   "max_memory": "$MAX_MEMORY",

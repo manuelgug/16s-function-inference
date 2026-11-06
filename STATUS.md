@@ -3,7 +3,7 @@
 **Living tracker.** Read this first when resuming, on any machine or in any session. Update it whenever a task changes state, then commit and push. Uncommitted status is lost status.
 
 - **Last updated:** 2026-11-06 by Claude Code (Opus 5.5)
-- **Current phase:** B0/B1 — benchmark against PICRUSt2 on its own reference (DESIGN §B); scaling (P5) waits for it
+- **Current phase:** B1 (exploration first, D095) — benchmark against PICRUSt2 on its own reference (DESIGN §B); scaling (P5) waits for it
 - **Blocking:** nothing
 
 Legend: `[ ]` todo · `[~]` in flight · `[x]` done · `[!]` blocked · `[-]` dropped
@@ -13,7 +13,7 @@ Every decision goes into [DECISIONS.md](DECISIONS.md) when it is made.
 For in-flight tasks, record machine, start date and how to resume. A long run is resumed with `./run.sh <profile>`; Nextflow `-resume` skips finished work.
 
 ## Next action
-Finish B0 (`./run.sh bench_test` end to end), then B1: `./run.sh bench` (BENCH_PHASE=dev) and the dev report
+B0 done. Now: exploration (D095) on dev fold 0 (`./run.sh bench --bench_folds 0 --bench_arms full,V4`, then `exploration/explore.py` + `exploration/report.py`), then B1: `./run.sh bench` (BENCH_PHASE=dev) and the dev report
 (`reports/bench/dev/benchmark_report.html`). Primary rule decided (D088: per-KO AUROC superiority + F1 non-inferiority).
 
 ## Tasks
@@ -66,7 +66,7 @@ Finish B0 (`./run.sh bench_test` end to end), then B1: `./run.sh bench` (BENCH_P
 - [x] Baselines: nearest genome (+ >= 97 %), 5-NN, genus core, k-mer MLP, null (D082, D083)
 - [x] Module completeness vectorised, exact (D079)
 - [x] Superseded Aim 1 / pilot PICRUSt2 code and reports removed (D078)
-- [~] B0: `./run.sh bench_test` end to end
+- [x] B0: `./run.sh bench_test` end to end (2026-11-06: 553 tasks, report rendered)
 - [ ] B1: dev run + dev report (HTML, executive summary, methods diagram)
 - [ ] B2: freeze (BENCHMARK.md, config/bench_frozen/), user approval
 - [ ] B3: confirm run + simulated communities

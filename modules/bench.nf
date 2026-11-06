@@ -21,7 +21,7 @@ process PSC_EXPORT {
 }
 
 process BENCH_EXTRACT {
-    publishDir params.outdir, mode: 'copy', saveAs: { f -> f == 'bench_data/genomes.tsv' ? f : null }
+    publishDir params.outdir, mode: 'link'   // hard links: the exploration (exploration/explore.py) reads it
     input:
     path psc
 
@@ -103,6 +103,10 @@ process PICRUST2_FOLD {
     def others = methods.findAll { m -> m != 'mp' }.join(' ')
     """
     export HOME=\$PWD   # Apptainer --no-home leaves HOME read-only
+    # PICRUSt2's prune_tree parses the placed tree recursively (dendropy); many queries grafted on one edge nest
+    # deeper than Python's default limit of 1000. Raising the limit changes no computation.
+    mkdir -p pyrl && echo 'import sys; sys.setrecursionlimit(1000000)' > pyrl/sitecustomize.py
+    export PYTHONPATH=\$PWD/pyrl
     cp -rL ${ref} r && mkdir p2
     for d in bac arc; do
         hmmbuild --dna --informat afa --cpu ${task.cpus} r/\${d}_ref/\${d}_ref.hmm r/\${d}_ref/\${d}_ref.fna > /dev/null
@@ -117,8 +121,10 @@ process PICRUST2_FOLD {
     for i in 1 2; do
         d=\$([ \$i = 1 ] && echo bac || echo arc)
         [ -s out/ref\${i}_\${d}_ko.tsv_predicted.tsv.gz ] && cp out/ref\${i}_\${d}_ko.tsv_predicted.tsv.gz p2/mp_ref\${i}.tsv.gz
+        # a domain with no query placed in it has nothing to predict (the pipeline skips it too)
+        n=\$(zcat out/ref\${i}_reduced_marker_predicted_and_nsti.tsv.gz 2>/dev/null | tail -n +2 | wc -l)
         for m in ${others}; do
-            [ -s out/ref\${i}_reduced.tre ] || continue
+            [ "\$n" -gt 0 ] || continue
             hsp.py --tree out/ref\${i}_reduced.tre --observed_trait_table r/\${d}_ko.tsv.gz --hsp_method \$m \\
                 --edge_exponent 0.5 --seed 100 --processes ${task.cpus} --output p2/\${m}_ref\${i}.tsv.gz
         done
@@ -223,6 +229,7 @@ process BENCH_PREDICT_STACKED {
 // One directory per task with every method's predictions, for the evaluation.
 process BENCH_MERGE {
     tag "${level}/${fold}/${arm}"
+    publishDir "${params.outdir}/tasks", mode: 'link'   // every method's predictions per task, for inspection and exploration
     input:
     tuple val(level), val(fold), val(arm), path(tdir), path(p2), path(pred1), path(mlp), path(pred2)
 
@@ -232,7 +239,7 @@ process BENCH_MERGE {
     script:
     """
     mkdir ${level}_${fold}_${arm}
-    cp -L ${tdir}/task.tsv ${tdir}/train.txt ${level}_${fold}_${arm}/
+    cp -L ${tdir}/task.tsv ${tdir}/train.txt ${tdir}/query.fna ${level}_${fold}_${arm}/
     cp -L ${p2}/* ${pred1}/pred_*.npz ${mlp}/pred_*.npz ${pred2}/pred_*.npz ${pred2}/novelty.tsv ${level}_${fold}_${arm}/
     """
 }
@@ -248,9 +255,9 @@ process BENCH_COMMUNITY {
 
     script:
     """
-    # code ${code(['bench_community.py', 'benchlib.py', 'bench_figures.py'])}
+    # code ${code(['bench_community.py', 'community.py', 'benchlib.py', 'bench_figures.py'])}
     export OMP_NUM_THREADS=${task.cpus} OPENBLAS_NUM_THREADS=${task.cpus} MKL_NUM_THREADS=${task.cpus}
-    bench_community.py --data ${data} --tasks ${tasks} --level genus --methods ${params.bench_p2_methods} \\
+    bench_community.py --data ${data} --tasks ${tasks} --level genus --arms V4,full --methods ${params.bench_p2_methods} \\
         --seed ${params.seed} --outdir community
     """
 }

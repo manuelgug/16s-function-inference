@@ -70,13 +70,17 @@ def write_report(out, phase, genomes, summary, prim, sec, novt, best_setting, th
               ", ".join(f"{r.oracle5 - r.picrust2_best:.3f}" for _, r in ceil.iterrows()) + " below it and s16fun " +
               ", ".join(f"{r.oracle5 - r.s16fun:.3f}" for _, r in ceil.iterrows()) + " (genus to class).", ""]
     if community is not None:
-        own = community[community.copies_from == "own 16S copies"].set_index("method")
-        p2 = own[own.index.str.startswith("picrust2_")].bray_curtis_mean
-        if "s16fun" in own.index and len(p2):
-            s_bc, best, dflt = own.loc["s16fun", "bray_curtis_mean"], p2.min(), own.bray_curtis_mean.get("picrust2_mp", np.nan)
-            L += [f"- **Community profiles** (simulated from held-out genera): Bray-Curtis to the true KO profile {s_bc:.3f} "
-                  f"for s16fun vs {best:.3f} for PICRUSt2's best setting ({p2.idxmin().removeprefix('picrust2_')}) and "
-                  f"{dflt:.3f} for its default (mp): {1 - s_bc / best:.0%} and {1 - s_bc / dflt:.0%} less error.", ""]
+        own = community[(community.copies_from == "own 16S copies")]
+        own = own[own.arm == ("V4" if "V4" in set(own.arm) else own.arm.iloc[0])]
+        for habitat, h in own.groupby("habitat"):
+            h = h.set_index("method").bray_curtis_mean
+            p2 = h[h.index.str.startswith("picrust2_")]
+            if "s16fun" in h and len(p2):
+                L += [f"- **Community KO profiles, {habitat}** ({own.arm.iloc[0]} ASVs from held-out genera): Bray-Curtis to the "
+                      f"truth {h['s16fun']:.3f} (s16fun) vs {p2.min():.3f} (PICRUSt2 best, {p2.idxmin().removeprefix('picrust2_')}) "
+                      f"and {h.get('picrust2_mp', np.nan):.3f} (PICRUSt2 default): {1 - h['s16fun'] / p2.min():.0%} less error "
+                      "than PICRUSt2's best."]
+        L += [""]
     if not res.empty:
         def get(p, c):
             v = res[res.process.str.contains(p)][c]
@@ -195,23 +199,20 @@ def write_report(out, phase, genomes, summary, prim, sec, novt, best_setting, th
     if community is not None:
         c = community.copy()
         c["method"] = c.method.map(lambda x: LABEL.get(x, x.replace("picrust2_", "PICRUSt2 ")))
-        own = c[c.copies_from == "own 16S copies"].sort_values("bray_curtis_mean")
-        tru = c[c.copies_from == "true 16S copies"].sort_values("bray_curtis_mean")
         L += ["## 6. Simulated communities", "", "![communities](fig8_community.png)", "",
-              quote("**Figure 8. Community-level predictions** (the task PICRUSt2 is built for). Each replicate draws a habitat "
-                    "pool of 300 genomes whose genus was held out; 100 samples each hold a random half of the pool; in half "
-                    "the samples 30 pool genomes are 4-fold more abundant. Reads per genome = cells x true 16S copies; each "
-                    "method converts reads back to cells with its own 16S copy prediction and to KO abundance with its own "
-                    "copy-number prediction. Boxes: 20 replicates. Left: per-sample Bray-Curtis to the true KO profile; middle: "
-                    "per-sample Spearman; right: agreement of predicted and true log2 fold changes between the groups.",
-                    "**How to read it:** the s16fun box (solid blue) against PICRUSt2's settings (pink). s16fun sums expected "
-                    "copies (probability x copies when present); 's16fun hard' uses its 0/1 calls instead, which isolates the "
-                    "effect of predicting expectations rather than single best guesses."), "",
-              "Mean over replicates (95 % interval over replicates), each method with its own 16S copy predictions:", "",
-              md_table(own[["method", "bray_curtis_mean", "bray_curtis_lo", "bray_curtis_hi", "spearman_mean",
-                            "lfc_spearman_mean", "da_precision_mean", "da_recall_mean", "da_f1_mean"]], "{:.4f}"), "",
-              "With the true 16S copy numbers given to every method (KO-content error only):", "",
-              md_table(tru[["method", "bray_curtis_mean", "bray_curtis_lo", "bray_curtis_hi", "spearman_mean"]], "{:.4f}"), ""]
+              quote("**Figure 8. Community KO profiles from ASVs** (the task PICRUSt2 is built for). Communities are drawn only "
+                    "from genomes whose genus was held out, one V4 ASV per genome, in three habitat designs (gut, marine, soil: "
+                    "ASVs per sample and evenness as in typical surveys). Reads = cells x true 16S copies; each method converts "
+                    "reads back to cells with its own 16S copy prediction and to KO abundance with its own copy predictions. "
+                    "Boxes: replicate communities (100 samples each).",
+                    "**How to read it:** lower is closer to the true KO profile. Solid blue: s16fun as shipped; pale blue: s16fun "
+                    "with hard 0/1 calls; pink: PICRUSt2's four settings."), ""]
+        for arm in sorted(set(c.arm)):
+            for src in ["own 16S copies", "true 16S copies"]:
+                t = c[(c.arm == arm) & (c.copies_from == src)].sort_values(["habitat", "bray_curtis_mean"])
+                cols = ["habitat", "method", "bray_curtis_mean", "bray_curtis_lo", "bray_curtis_hi", "spearman_mean"] + (
+                    ["lfc_spearman_mean", "da_precision_mean", "da_recall_mean"] if src == "own 16S copies" else [])
+                L += [f"{arm} ASVs, {src}:", "", md_table(t[cols], "{:.4f}"), ""]
 
     # resources
     if not res.empty:
